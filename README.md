@@ -7,4 +7,3 @@ and speed of a simulated approach and the reality and accuracy of in-field exper
 
 The toolchain and software architecture of SENSEH is described in detail in our [IEEE SenseApp 2014 paper](http://disi.unitn.it/~raza/Papers/senseh.pdf)
 
-**The code will be uploaded soon!!!**
