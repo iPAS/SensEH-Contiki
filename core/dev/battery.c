@@ -7,10 +7,8 @@
 
 #include "battery.h"
 #include "battery-LUT.h"
-#include "dbp.h"
 #include "energy-cons.h"
 #include "lookup-table.h"
-#include "save-data.h"
 
 #include "lib/random.h"
 
@@ -28,6 +26,8 @@ static struct energy_storage battery;
 static struct ctimer update_timer;
 
 static float remaining_energy;
+
+static uint32_t energy_spent;
 
 
 uint8_t battery_is_charged(void)
@@ -50,6 +50,7 @@ void update_battery(void *n)
     float cons_value;
 
     cons_value = update_consumption();
+    energy_spent += cons_value;
 
     discharge(cons_value);
 
@@ -79,17 +80,10 @@ initialize_battery(void)
 
 
 void
-initialize_energy_data(uint8_t first)
+initialize_energy_data(void)
 {
     initialize_battery();
     energy_spent = 0;
-
-    if(first) {
-        PRINTF("Reset initialization\n");
-        metric_values.batt = remaining_energy * battery.num_batteries;
-        metric_values.harv = 0;
-        metric_values.cons = 0;
-    }
 
     reset_energest_times();
 
@@ -153,7 +147,7 @@ residual_battery_percentage(void)
 }
 
 
-void print_battery_data(uint8_t save)
+void print_battery_data(void)
 {
     PRINTF("Energy spent: %lumJ - My battery level %lumJ\n",
            (uint32_t) energy_spent, (uint32_t) (remaining_energy * battery.num_batteries));
