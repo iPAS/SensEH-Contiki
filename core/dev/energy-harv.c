@@ -10,7 +10,6 @@
 #include "battery.h"
 #include "cell-LUT.h"
 #include "lookup-table.h"
-#include "save-data.h"
 
 #define CALIBRATION_CONSTANT		0.596
 
@@ -47,7 +46,6 @@ get_power(uint16_t raw_light)
 
 	lut = POWER;
 	power = get_y(lut, lux);
-	PRINTF("Cells power: %u\n", (uint16_t) power);
 
 	cell_pow_mw = power / 1000;
 	voltage = get_voltage() * get_num_batteries();
@@ -55,7 +53,8 @@ get_power(uint16_t raw_light)
 	lut = EFFICIENCY;
 	efficiency = get_z(lut, cell_pow_mw, voltage);
 
-	return (power * efficiency);
+
+	return (cell_pow_mw * efficiency);
 }
 
 
@@ -69,7 +68,7 @@ get_harvested_energy(uint16_t raw_light, float time_interval)
 	energy_harvested += harv_energy;
 	PRINTF("Energy harvested: %u\n", (uint16_t) harv_energy);
 
-	charge(harv_energy);
+	charge_battery(harv_energy);
 }
 
 

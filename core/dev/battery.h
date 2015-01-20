@@ -45,12 +45,13 @@ struct metric_data {
 
 
 void initialize_battery(void);
-void initialize_energy_data(uint8_t first);
+void initialize_energy_data(void);
 
 float get_charge(void);
 float get_voltage(void);
 uint16_t get_num_batteries(void);
 
+void charge_battery(float energy);
 void charge(float energy_mj);
 void discharge(float energy_mj);
 
@@ -58,6 +59,6 @@ float residual_battery_percentage(void);
 
 uint8_t battery_is_charged(void);
 
-void print_battery_data(uint8_t save);
+void print_battery_data(void);
 
 #endif // __BATTERYMODEL_H__
