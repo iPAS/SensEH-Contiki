@@ -6,23 +6,8 @@
  */
 
 #include "contiki.h"
-//#include "cfs/cfs-coffee.h"
-//#include "dev/cc2420.h"
-//#include "dev/leds.h"
 #include "dev/serial-line.h"
-//#include "dev/watchdog.h"
 #include "battery.h"
-//#include "ISL29004.h"
-//#include "light-reader.h"
-//#include "lib/random.h"
-//#include "save-data.h"
-//#include "send-file.h"
-//#include "starting-point.h"
-//#include "net/netstack.h"
-//#include "net/mac/multirdc.h"
-//#include "net/rime.h"
-//#include "net/rime/broadcast-announcement.h"
-//#include "net/rime/collect.h"
 
 #include "energy-harv.h"
 
@@ -57,6 +42,7 @@ PROCESS_THREAD(senseh_test_process, ev, data)
             sensor_value = atoi(data);
 
 			get_harvested_energy(sensor_value, LIGHT_TIMER);
+			print_incoming_power();
 			print_battery_data();
     }
 

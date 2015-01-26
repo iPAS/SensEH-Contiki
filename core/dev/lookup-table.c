@@ -41,6 +41,7 @@ get_piecewise_line_points(float x, struct points *points_ptr,
 	struct points *piece_points = points_ptr;
 	uint8_t x_in_range;
 	uint16_t i, points_length;
+	uint16_t prev, next;
 
 	points_length = 0;
 
@@ -72,18 +73,22 @@ get_piecewise_line_points(float x, struct points *points_ptr,
 		i++;
 	}
 	if(x_in_range) {
-		uint16_t prev = i - 1;
-		uint16_t next = i;
+		prev = i - 1;
+		next = i;
 
 		if(i == 0) {
 			prev = 0;
 			next = 1;
 		}
-		piece_points[0].x = values_x[prev];
-		piece_points[0].y = values_y[prev];
-		piece_points[1].x = values_x[next];
-		piece_points[1].y = values_y[next];
+	} else {
+		prev = points_length - 2;
+		next = points_length - 1;
 	}
+
+	piece_points[0].x = values_x[prev];
+	piece_points[0].y = values_y[prev];
+	piece_points[1].x = values_x[next];
+	piece_points[1].y = values_y[next];
 
 	return;
 }
@@ -187,6 +192,8 @@ get_piecewise_line_points_3D(uint16_t *points_pointer, float *array, float value
 			array_indices[0] = i - 1;
 			array_indices[1] = i;
 		}
+	} else {
+		array_indices[0] = array_indices[1] = points_length - 1;
 	}
 
 	return;
