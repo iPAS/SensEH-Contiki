@@ -53,7 +53,6 @@ get_power(uint16_t raw_light)
 	lut = EFFICIENCY;
 	efficiency = get_z(lut, cell_pow_mw, voltage);
 
-
 	return (cell_pow_mw * efficiency);
 }
 
@@ -63,19 +62,19 @@ get_harvested_energy(uint16_t raw_light, float time_interval)
 {
 	float harv_energy;
 	cell_power = num_cells * get_power(raw_light);
-	harv_energy = num_cells * get_power(raw_light) * time_interval;
+	harv_energy = cell_power * time_interval;
 
 	energy_harvested += harv_energy;
-	PRINTF("Energy harvested: %u\n", (uint16_t) harv_energy);
+	PRINTF("Energy harv in period: %umJ\n", (uint16_t) harv_energy);
 
 	charge_battery(harv_energy);
 }
 
 
-void print_incoming_power(uint8_t save)
+void print_incoming_power(void)
 {
-    PRINTF("Cells Pow: %uuW - Harv en: %lumJ\n",
-           (uint16_t) cell_power, (uint32_t) energy_harvested);
+    PRINTF("Cells Pow: %uuW - Total energy harv: %lumJ\n",
+           (uint16_t) (cell_power * 1000), (uint32_t) energy_harvested);
 }
 
 
