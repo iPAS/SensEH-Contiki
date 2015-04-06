@@ -84,3 +84,7 @@ contiki-cc2530dk.lib
 
 #regression tests artifacts
 *.testlog
+
+#eclipse
+.cproject
+.project
