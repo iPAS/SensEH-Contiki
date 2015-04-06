@@ -12,3 +12,6 @@ The toolchain and software architecture of SENSEH is described in detail in our 
 A sample application that uses SensEH is available in directory "examples\senseh-test" 
 Compile and run. 
 
+# The transmission-power model: an extension for SensEH
+
+...
