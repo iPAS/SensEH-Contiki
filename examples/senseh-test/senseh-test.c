@@ -34,16 +34,16 @@ PROCESS_THREAD(senseh_test_process, ev, data)
     PROCESS_BEGIN();
 
 	set_num_cells(NUM_CELLS);
-	initialize_energy_data();
+	initialize_energy_data(); // Update the consumption and residue energy
 
     while(battery_is_charged()) {
-            PROCESS_WAIT_EVENT_UNTIL(ev == serial_line_event_message);
+        PROCESS_WAIT_EVENT_UNTIL(ev == serial_line_event_message);
 
-            sensor_value = atoi(data);
+        sensor_value = atoi(data);
 
-			get_harvested_energy(sensor_value, LIGHT_TIMER);
-			print_incoming_power();
-			print_battery_data();
+        get_harvested_energy(sensor_value, LIGHT_TIMER);
+        print_incoming_power();
+        print_battery_data();
     }
 
     PROCESS_END();
