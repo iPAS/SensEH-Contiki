@@ -43,9 +43,7 @@ import se.sics.cooja.MoteTimeEvent;
 import se.sics.cooja.MoteType;
 import se.sics.cooja.RadioPacket;
 import se.sics.cooja.Simulation;
-import se.sics.cooja.MoteType.MoteTypeCreationException;
 import se.sics.cooja.interfaces.ApplicationRadio;
-import se.sics.cooja.interfaces.Radio.RadioEvent;
 
 /**
  * Simple application-level mote that periodically transmits dummy radio packets

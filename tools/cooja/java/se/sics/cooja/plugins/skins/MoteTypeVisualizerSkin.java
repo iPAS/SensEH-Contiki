@@ -40,8 +40,8 @@ import se.sics.cooja.Mote;
 import se.sics.cooja.MoteType;
 import se.sics.cooja.Simulation;
 import se.sics.cooja.plugins.Visualizer;
-import se.sics.cooja.plugins.VisualizerSkin;
 import se.sics.cooja.plugins.Visualizer.MoteMenuAction;
+import se.sics.cooja.plugins.VisualizerSkin;
 
 /**
  * Mote type visualizer skin.

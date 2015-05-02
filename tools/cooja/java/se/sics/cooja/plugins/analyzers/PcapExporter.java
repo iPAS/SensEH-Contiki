@@ -1,9 +1,7 @@
 package se.sics.cooja.plugins.analyzers;
 
 import java.io.DataOutputStream;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 
 public class PcapExporter {

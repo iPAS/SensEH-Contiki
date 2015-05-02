@@ -31,7 +31,8 @@
 package se.sics.cooja.contikimote.interfaces;
 
 import org.apache.log4j.Logger;
-import se.sics.cooja.*;
+
+import se.sics.cooja.Mote;
 import se.sics.cooja.contikimote.ContikiMoteInterface;
 import se.sics.cooja.interfaces.IPAddress;
 

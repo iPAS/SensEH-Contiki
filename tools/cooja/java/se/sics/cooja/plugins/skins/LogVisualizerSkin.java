@@ -34,21 +34,17 @@ import java.awt.Color;
 import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Point;
-import java.util.Observable;
-import java.util.Observer;
 
 import org.apache.log4j.Logger;
 
 import se.sics.cooja.ClassDescription;
 import se.sics.cooja.Mote;
 import se.sics.cooja.MoteInterface;
-import se.sics.cooja.Simulation;
 import se.sics.cooja.SimEventCentral.LogOutputEvent;
 import se.sics.cooja.SimEventCentral.LogOutputListener;
-import se.sics.cooja.SimEventCentral.MoteCountListener;
+import se.sics.cooja.Simulation;
 import se.sics.cooja.interfaces.Log;
 import se.sics.cooja.interfaces.Position;
-import se.sics.cooja.interfaces.SerialPort;
 import se.sics.cooja.plugins.Visualizer;
 import se.sics.cooja.plugins.VisualizerSkin;
 

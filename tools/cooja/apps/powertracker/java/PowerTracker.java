@@ -270,7 +270,7 @@ public class PowerTracker extends VisPlugin {
     long radioRx = 0;
     long radioInterfered = 0;
     long duration = 0;
-    for (MoteTracker mt: moteTrackers) {
+    for (MoteTracker mt: moteTrackers) { // Every nodes in the network
       radioOn += mt.radioOn;
       radioTx += mt.radioTx;
       radioRx += mt.radioRx;

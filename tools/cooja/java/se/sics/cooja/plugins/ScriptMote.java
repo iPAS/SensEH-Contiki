@@ -29,8 +29,9 @@
  */
 
 package se.sics.cooja.plugins;
-import se.sics.cooja.*;
-import se.sics.cooja.interfaces.*;
+import se.sics.cooja.Mote;
+import se.sics.cooja.interfaces.Log;
+import se.sics.cooja.interfaces.SerialPort;
 /**
  * 
  *

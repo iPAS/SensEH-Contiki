@@ -33,9 +33,12 @@ package se.sics.cooja.contikimote.interfaces;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+
 import javax.swing.JButton;
 import javax.swing.JPanel;
+
 import org.jdom.Element;
+
 import se.sics.cooja.Mote;
 import se.sics.cooja.SectionMoteMemory;
 import se.sics.cooja.contikimote.ContikiMote;

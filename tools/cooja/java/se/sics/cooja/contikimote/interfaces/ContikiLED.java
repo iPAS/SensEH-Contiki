@@ -30,13 +30,20 @@
 
 package se.sics.cooja.contikimote.interfaces;
 
-import java.awt.*;
-import java.util.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.util.Collection;
+import java.util.Observable;
+import java.util.Observer;
+
 import javax.swing.JPanel;
+
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 
-import se.sics.cooja.*;
+import se.sics.cooja.Mote;
+import se.sics.cooja.SectionMoteMemory;
 import se.sics.cooja.contikimote.ContikiMoteInterface;
 import se.sics.cooja.interfaces.LED;
 import se.sics.cooja.interfaces.PolledAfterActiveTicks;

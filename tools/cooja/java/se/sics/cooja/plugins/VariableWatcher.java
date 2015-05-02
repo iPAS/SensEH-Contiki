@@ -65,6 +65,7 @@ import javax.swing.text.PlainDocument;
 import org.jdom.Element;
 
 import se.sics.cooja.AddressMemory;
+import se.sics.cooja.AddressMemory.UnknownVariableException;
 import se.sics.cooja.ClassDescription;
 import se.sics.cooja.GUI;
 import se.sics.cooja.Mote;
@@ -72,7 +73,6 @@ import se.sics.cooja.MotePlugin;
 import se.sics.cooja.PluginType;
 import se.sics.cooja.Simulation;
 import se.sics.cooja.VisPlugin;
-import se.sics.cooja.AddressMemory.UnknownVariableException;
 
 /**
  * Variable Watcher enables a user to watch mote variables during a simulation.

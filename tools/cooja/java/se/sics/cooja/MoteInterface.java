@@ -32,7 +32,9 @@ package se.sics.cooja;
 
 import java.util.Collection;
 import java.util.Observable;
+
 import javax.swing.JPanel;
+
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 

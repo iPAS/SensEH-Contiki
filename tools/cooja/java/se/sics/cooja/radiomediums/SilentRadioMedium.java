@@ -30,10 +30,13 @@
 
 package se.sics.cooja.radiomediums;
 import java.util.Collection;
+
 import org.jdom.Element;
 
-import se.sics.cooja.*;
-import se.sics.cooja.interfaces.*;
+import se.sics.cooja.ClassDescription;
+import se.sics.cooja.RadioConnection;
+import se.sics.cooja.Simulation;
+import se.sics.cooja.interfaces.Radio;
 
 /**
  * Silent radio. No data is ever transferred through this medium.

@@ -30,13 +30,21 @@
 
 package se.sics.cooja.contikimote.interfaces;
 
-import java.awt.event.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collection;
-import javax.swing.*;
+
+import javax.swing.JButton;
+import javax.swing.JPanel;
+
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 
-import se.sics.cooja.*;
+import se.sics.cooja.Mote;
+import se.sics.cooja.MoteTimeEvent;
+import se.sics.cooja.SectionMoteMemory;
+import se.sics.cooja.Simulation;
+import se.sics.cooja.TimeEvent;
 import se.sics.cooja.contikimote.ContikiMote;
 import se.sics.cooja.contikimote.ContikiMoteInterface;
 import se.sics.cooja.interfaces.Button;

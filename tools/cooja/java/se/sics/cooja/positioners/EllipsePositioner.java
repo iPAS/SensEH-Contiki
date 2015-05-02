@@ -29,7 +29,8 @@
  */
 
 package se.sics.cooja.positioners;
-import se.sics.cooja.*;
+import se.sics.cooja.ClassDescription;
+import se.sics.cooja.Positioner;
 
 /**
  * Generates positions in a ellipse in the XY plane.

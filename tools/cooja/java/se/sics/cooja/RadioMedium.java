@@ -32,7 +32,10 @@ package se.sics.cooja;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Observable;
+import java.util.Observer;
+
 import org.jdom.Element;
 
 import se.sics.cooja.interfaces.Radio;

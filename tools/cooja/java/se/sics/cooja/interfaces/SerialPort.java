@@ -32,7 +32,7 @@ package se.sics.cooja.interfaces;
 
 import java.util.Observer;
 
-import se.sics.cooja.*;
+import se.sics.cooja.ClassDescription;
 
 @ClassDescription("Serial port")
 public interface SerialPort {

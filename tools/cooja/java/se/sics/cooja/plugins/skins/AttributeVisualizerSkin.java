@@ -41,8 +41,8 @@ import org.apache.log4j.Logger;
 
 import se.sics.cooja.ClassDescription;
 import se.sics.cooja.Mote;
-import se.sics.cooja.Simulation;
 import se.sics.cooja.SimEventCentral.MoteCountListener;
+import se.sics.cooja.Simulation;
 import se.sics.cooja.interfaces.MoteAttributes;
 import se.sics.cooja.interfaces.Position;
 import se.sics.cooja.plugins.Visualizer;
