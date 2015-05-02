@@ -17,23 +17,32 @@ public class EHNode{
   private PowerConsumption consumption; 
   private int nodeID; 
   
+  public EHSystem getEHSystem() {
+    return ehSys; 
+  }
+  
+  public PowerConsumption getPowerConsumption() {
+    return consumption;
+  }
+  
 
   public EHNode(int nodeID, Simulation simulation, String configFilePath) {
-    this.nodeID= nodeID+1;
+    this.nodeID = nodeID + 1;
     this.simulation = simulation;
-    ehSys = new EHSystem (configFilePath, (this.nodeID));
     mote = simulation.getMote(nodeID);
-    storageMotePin = new Pin (ehSys.getStorage(), (SkyMote)mote); 
+    
+    ehSys = new EHSystem(configFilePath, this.nodeID);
+    storageMotePin = new Pin(ehSys.getStorage(), (SkyMote)mote);
     consumption = new PowerConsumption(simulation, mote, ehSys.getVoltage());
   }
 
-  public void printStats(){
-	System.out.println (this.nodeID + "\t" + ehSys.getTotalHarvestedEnergy() + "\t" + consumption.getTotalConsumedEnergy()); 
-	//System.out.println ("harv\t"+ehSys.getTotalHarvestedEnergy());
-	//System.out.println ("cons\t"+consumption.getTotalConsumedEnergy());  
+  public void printStats() {
+    System.out.println(this.nodeID + "\t" + 
+        ehSys.getTotalHarvestedEnergy() + "\t" + 
+        consumption.getTotalConsumedEnergy());
   }
 
-  public void updateCharge(){
+  public void updateCharge(){ // iPAS: the EH system model of the node
     chargeStorage();
     dischargeConsumption();
     consumption.setVoltage(ehSys.getVoltage()); 
@@ -44,14 +53,8 @@ public class EHNode{
   }  
 
   private void dischargeConsumption(){
-    double energyConsumed= ehSys.getChargeInterval() /*seconds*/ * consumption.getAveragePower() /*mW*/;
-    //System.out.println (ehSys.getChargeInterval());
+    double energyConsumed = ehSys.getChargeInterval() /*sec*/ * consumption.getAveragePower() /*mW*/;
     ehSys.consumeCharge(energyConsumed);
-    //System.out.println ("Consumed energy: "+ energyConsumed + "mJ");
     consumption.reset();
-  }
-
-  public EHSystem getEHSystem (){
-	return ehSys; 
   }
 }
