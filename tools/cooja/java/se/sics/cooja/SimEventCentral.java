@@ -28,13 +28,11 @@
 
 package se.sics.cooja;
 
-import java.io.File;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Observable;
 import java.util.Observer;
-import java.util.Vector;
 
 import org.apache.log4j.Logger;
 import org.jdom.Element;

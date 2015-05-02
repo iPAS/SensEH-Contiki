@@ -44,15 +44,14 @@ import org.apache.log4j.Logger;
 
 import se.sics.cooja.ClassDescription;
 import se.sics.cooja.Mote;
-import se.sics.cooja.Simulation;
 import se.sics.cooja.SimEventCentral.MoteCountListener;
-import se.sics.cooja.dialogs.MessageList.MessageContainer;
+import se.sics.cooja.Simulation;
 import se.sics.cooja.interfaces.IPAddress;
 import se.sics.cooja.interfaces.Position;
 import se.sics.cooja.interfaces.RimeAddress;
 import se.sics.cooja.plugins.Visualizer;
-import se.sics.cooja.plugins.VisualizerSkin;
 import se.sics.cooja.plugins.Visualizer.MoteMenuAction;
+import se.sics.cooja.plugins.VisualizerSkin;
 
 /**
  * Visualizer skin for mote addresses.

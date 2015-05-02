@@ -31,12 +31,21 @@
 package se.sics.cooja.interfaces;
 
 import java.text.NumberFormat;
-import java.util.*;
-import javax.swing.*;
+import java.util.Collection;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.Vector;
+
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 
-import se.sics.cooja.*;
+import se.sics.cooja.ClassDescription;
+import se.sics.cooja.Mote;
+import se.sics.cooja.MoteInterface;
 
 /**
  * Mote 3D position.

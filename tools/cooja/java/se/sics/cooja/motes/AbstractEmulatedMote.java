@@ -30,7 +30,6 @@ package se.sics.cooja.motes;
 
 import se.sics.cooja.Mote;
 import se.sics.cooja.plugins.BufferListener;
-import se.sics.cooja.plugins.BufferListener.BufferAccess;
 import se.sics.cooja.plugins.TimeLine;
 
 public abstract class AbstractEmulatedMote extends AbstractWakeupMote implements Mote {

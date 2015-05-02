@@ -33,7 +33,12 @@ package se.sics.cooja.contikimote.interfaces;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
-import se.sics.cooja.*;
+
+import se.sics.cooja.ClassDescription;
+import se.sics.cooja.Mote;
+import se.sics.cooja.MoteTimeEvent;
+import se.sics.cooja.SectionMoteMemory;
+import se.sics.cooja.TimeEvent;
 import se.sics.cooja.contikimote.ContikiMote;
 import se.sics.cooja.contikimote.ContikiMoteInterface;
 import se.sics.cooja.dialogs.SerialUI;

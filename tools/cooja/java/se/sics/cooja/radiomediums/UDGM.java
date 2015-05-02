@@ -172,10 +172,10 @@ public class UDGM extends AbstractRadioMedium {
     }
 
     /* Calculate ranges: grows with radio output power */
-    double moteTransmissionRange = TRANSMITTING_RANGE
-    * ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
-    double moteInterferenceRange = INTERFERENCE_RANGE
-    * ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
+    double moteTransmissionRange = TRANSMITTING_RANGE * 
+        ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
+    double moteInterferenceRange = INTERFERENCE_RANGE * 
+        ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
 
     /* Get all potential destination radios */
     DestinationRadio[] potentialDestinations = dgrm.getPotentialDestinations(sender);

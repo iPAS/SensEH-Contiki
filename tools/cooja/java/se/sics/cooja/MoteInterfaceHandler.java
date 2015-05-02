@@ -30,10 +30,27 @@
 
 package se.sics.cooja;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.apache.log4j.Logger;
-import se.sics.cooja.interfaces.*;
+
+import se.sics.cooja.interfaces.Battery;
+import se.sics.cooja.interfaces.Beeper;
+import se.sics.cooja.interfaces.Button;
+import se.sics.cooja.interfaces.Clock;
+import se.sics.cooja.interfaces.IPAddress;
+import se.sics.cooja.interfaces.LED;
+import se.sics.cooja.interfaces.Log;
+import se.sics.cooja.interfaces.MoteID;
+import se.sics.cooja.interfaces.PIR;
+import se.sics.cooja.interfaces.PolledAfterActiveTicks;
+import se.sics.cooja.interfaces.PolledAfterAllTicks;
+import se.sics.cooja.interfaces.PolledBeforeActiveTicks;
+import se.sics.cooja.interfaces.PolledBeforeAllTicks;
+import se.sics.cooja.interfaces.Position;
+import se.sics.cooja.interfaces.Radio;
+import se.sics.cooja.interfaces.RimeAddress;
 
 /**
  * The mote interface handler holds all interfaces for a specific mote.

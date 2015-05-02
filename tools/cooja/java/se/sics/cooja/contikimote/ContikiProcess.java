@@ -30,7 +30,7 @@
 
 package se.sics.cooja.contikimote;
 
-import java.io.*;
+import java.io.File;
 
 public class ContikiProcess {
   private File sourceFile;

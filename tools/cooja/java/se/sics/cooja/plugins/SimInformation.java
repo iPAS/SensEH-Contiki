@@ -30,14 +30,26 @@
 
 package se.sics.cooja.plugins;
 
-import java.awt.*;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
-import javax.swing.*;
+import java.util.Observable;
+import java.util.Observer;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 import javax.swing.Timer;
 
-import se.sics.cooja.*;
+import se.sics.cooja.ClassDescription;
+import se.sics.cooja.GUI;
+import se.sics.cooja.PluginType;
+import se.sics.cooja.RadioMedium;
+import se.sics.cooja.Simulation;
+import se.sics.cooja.VisPlugin;
 
 /**
  * SimInformation is a simple information window for simulations.

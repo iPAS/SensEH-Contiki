@@ -31,7 +31,8 @@
 package se.sics.cooja.positioners;
 import java.util.Random;
 
-import se.sics.cooja.*;
+import se.sics.cooja.ClassDescription;
+import se.sics.cooja.Positioner;
 
 /**
  * Generates positions randomly distributed in a given interval.

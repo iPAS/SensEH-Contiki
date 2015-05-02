@@ -11,7 +11,7 @@ import javax.swing.JPanel;
 import org.apache.log4j.Logger;
 import org.jdom.Element;
 
-import se.sics.cooja.*;
+import se.sics.cooja.Mote;
 import se.sics.cooja.contikimote.interfaces.ContikiLED;
 
 public class ApplicationLED extends LED {

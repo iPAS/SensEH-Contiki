@@ -30,7 +30,9 @@
 
 package se.sics.cooja.interfaces;
 
-import se.sics.cooja.*;
+import se.sics.cooja.ClassDescription;
+import se.sics.cooja.MoteInterface;
+import se.sics.cooja.Simulation;
 
 /**
  * Represents a mote's internal clock. Notice that the overall

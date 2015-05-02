@@ -30,7 +30,8 @@
 
 package se.sics.cooja.interfaces;
 
-import se.sics.cooja.*;
+import se.sics.cooja.ClassDescription;
+import se.sics.cooja.MoteInterface;
 
 /**
  * A Log represents a mote logging output. An implementation should notify all

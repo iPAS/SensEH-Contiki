@@ -28,7 +28,7 @@
 
 package se.sics.cooja;
 
-import javax.swing.*;
+import javax.swing.JApplet;
 
 public class CoojaApplet extends JApplet {
 

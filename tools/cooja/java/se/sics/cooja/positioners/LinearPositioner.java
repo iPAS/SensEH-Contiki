@@ -29,7 +29,8 @@
  */
 
 package se.sics.cooja.positioners;
-import se.sics.cooja.*;
+import se.sics.cooja.ClassDescription;
+import se.sics.cooja.Positioner;
 
 /**
  * Generates positions linearly distributed in a given interval.

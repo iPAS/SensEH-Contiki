@@ -33,7 +33,6 @@ import org.apache.log4j.Logger;
 
 import se.sics.cooja.ConvertedRadioPacket;
 import se.sics.cooja.RadioPacket;
-import se.sics.cooja.util.StringUtils;
 /**
  * Converts radio packets between X-MAC/802.15.4 nodes and COOJA.
  * Handles radio driver specifics such as length header and CRC footer.
