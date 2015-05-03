@@ -13,19 +13,31 @@ import se.sics.cooja.Simulation;
 import se.sics.cooja.TimeEvent;
 import se.sics.cooja.VisPlugin;
 import se.sics.cooja.dialogs.MessageList;
+import se.sics.cooja.interfaces.Radio;
 import se.sics.cooja.util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-
+/**
+ * SensEH Project
+ * Originated by 
+ * @author raza
+ * @see http://usmanraza.github.io/SensEH-Contiki/
+ * 
+ * 'SensEHGUI' is a main module which has been run before the simulation begin.
+ * 
+ * Adopted and adapted by 
+ * @author ipas
+ * @since 2015-05-01
+ */
 @ClassDescription("SensEH GUI")
 @PluginType(PluginType.SIM_PLUGIN)
 public class SensEHGUI extends VisPlugin {
   private static Logger logger = Logger.getLogger(SensEHGUI.class);
 
   private Simulation simulation;  
-  private EHNode[] ehNodes; 
+  private EHNode [] ehNodes; 
 
   private long startTime; /* uS */
   private ChargeUpdateEvent chargeUpdateEvent;
@@ -127,13 +139,10 @@ public class SensEHGUI extends VisPlugin {
       }
 
       /* SensEH does NOT continuously count harvested energies and consumed energies.
-       * It updates the charges every period, i.e., charge interval.
+       * It updates the charges periodically on every interval.
        */
-      for (int i = 0; i < ehNodes.length; i++) {
-        ehNodes[i].updateCharge(); // charge with harvested energy, and,
-                                   // discharge with consumed energy        
-//        if (totalUpdates % 30 == 0) // show every 30 rounds
-//          ehNodes[i].printStats();
+      for (EHNode node : ehNodes) {
+        node.updateCharge(); // charge with harvested energy, and, discharge with consumed energy        
       }
 
       // Now schedule the next event
@@ -177,18 +186,58 @@ public class SensEHGUI extends VisPlugin {
   }
   
   // --------------------------------------------------------------------------
-  public String getHarvestingStatistics() {
+  public String getStatistics() {
+    StringBuilder sb = new StringBuilder();    
+    long lastUpdateTime = startTime + (long)((totalUpdates-1) * getChargeInterval() * 1000000);
     
-    for (int i = 0; i < ehNodes.length; i++) {
-      EnergyStorage storage = ehNodes[i].getEHSystem().getStorage(); 
-      Harvester harvester = ehNodes[i].getEHSystem().getHarvester();
-      PowerConsumption consumption = ehNodes[i].getPowerConsumption();
+    sb.append("@" + lastUpdateTime + "\n");
+    
+    for (EHNode node : ehNodes) {
+      int id  = node.getNodeID();
       
+      EnergyStorage storage = node.getEHSystem().getStorage(); 
+      EHSystem ehsys = node.getEHSystem();
+      PowerConsumption consumption = node.getPowerConsumption();
+            
+//      consumption.getConsumedEnergyByCPU();
+//      consumption.getConsumedEnergyByRadioRx();
+//      consumption.getConsumedEnergyByRadioTx();
       
+      sb.append("node="   + id + ", ");
+      sb.append("sto:mJ=" + storage.getEnergy() + ", ");
+      sb.append("eh:mJ="  + ehsys.getTotalHarvestedEnergy() + ", ");
+      sb.append(consumption.getSnappedStatistics());
+      sb.append("\n");
+    }    
+    
+    return sb.toString();
+  }
+
+  public String radioStatistics() {
+    return radioStatistics(true, true, false);
+  }
+
+  public String radioStatistics(boolean radioHW, boolean radioRXTX, boolean onlyAverage) {
+    StringBuilder sb = new StringBuilder();
+    
+    /* Average */
+    PowerConsumption.RadioTimes radioTimesAVG = new PowerConsumption.RadioTimes(0); // omitting tx levels             
+    for (EHNode node : ehNodes) {
+      PowerConsumption consumption = node.getPowerConsumption();
+      radioTimesAVG.addMemberValuesWith(consumption.radioTimesTotal);
+    }    
+    sb.append(PowerConsumption.radioStatistics(radioHW, radioRXTX, 
+        false /* not show duration */, false /* not show idle */, radioTimesAVG, "AVG "));
+
+    /* All nodes */
+    if (!onlyAverage) {
+      for (EHNode node : ehNodes) {
+        PowerConsumption consumption = node.getPowerConsumption();
+        sb.append(consumption.radioStatistics());
+      }
     }
     
-    long lastUpdateTime = startTime + (long)(totalUpdates * getChargeInterval() * 1000000);
-    return Long.toString(lastUpdateTime);
+    return sb.toString();
   }
 
 }

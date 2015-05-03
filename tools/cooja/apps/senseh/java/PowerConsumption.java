@@ -22,6 +22,16 @@ import se.sics.mspsim.core.MSP430Constants;
 import se.sics.cooja.interfaces.Radio.RadioEvent;
 
 
+/**
+ * SensEH Project
+ * Originated by 
+ * @author raza
+ * @see http://usmanraza.github.io/SensEH-Contiki/
+ * 
+ * Adopted and adapted by 
+ * @author ipas
+ * @since 2015-05-01
+ */
 @ClassDescription("Power Consumption Model for SensEH")
 public class PowerConsumption implements OperatingModeListener, Observer, MSP430Constants{
 
@@ -32,71 +42,137 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
   private Chip cpu;
   private Radio radio;
 
-  //cpu 
+  // cpu modes 
   private int lastCPUMode;
 
   // cpu statistics
-  long cpuModeTimes[];
-  long totalCpuModeTimes[];
+  long [] cpuModeTimes;
+  long [] cpuModeTimesTotal;
+  long [] cpuModeTimesTotalSnapshot;  
   private long lastCPUUpdateTime;
-  
+
+  protected void accumulateCPUModeTime(int mode, long t) {
+    cpuModeTimes[mode] += t;
+    cpuModeTimesTotal[mode] += t;
+  }
+
+  //--------------------------------------------------------------------------
   // radio states
   private boolean radioWasOn;
   private RadioState lastRadioState;
   private long lastRadioUpdateTime;
 
   // radio statistics, timers are recorded in micro-second
-  long duration = 0;
-  long radioOn  = 0;
-  long radioTx  = 0;
-  long radioRx  = 0;
-  long radioInterfered = 0;
-  long radioIdle = 0;
-  long radioOff = 0;
+  public static class RadioTimes {
+    public long duration;
+    public long on;
+    public long tx;
+    public long rx;
+    public long interfered;
+    public long idle;
+    public long off;
+    public long [] multiTx;
+    
+    public RadioTimes(int multi) {
+      multiTx = new long[multi];
+      reset();
+    }
+    
+    public void reset() {
+      duration = on = tx = rx = interfered = idle = off = 0;
+      for (int i = 0; i < multiTx.length; i++)
+        multiTx[i] = 0;
+    }
+    
+    public void setMemberValuesAs(final RadioTimes rt) {
+      duration   = rt.duration;
+      on         = rt.on;         
+      tx         = rt.tx;         
+      rx         = rt.rx;         
+      interfered = rt.interfered; 
+      idle       = rt.idle;       
+      off        = rt.off;
+      for (int i = 0; i < multiTx.length; i++)
+        multiTx[i] = rt.multiTx[i];
+    }
+    
+    public void addMemberValuesWith(final RadioTimes rt) {
+      duration   += rt.duration;
+      on         += rt.on;         
+      tx         += rt.tx;         
+      rx         += rt.rx;         
+      interfered += rt.interfered; 
+      idle       += rt.idle;       
+      off        += rt.off;
+      for (int i = 0; i < multiTx.length; i++)
+        multiTx[i] += rt.multiTx[i];      
+    }
+    
+    public void accumulateDuration(long t) {
+      duration += t;
+    }
 
-  long totalRadioOn = 0;  
-  long totalRadioTx = 0;
-  long totalRadioRx = 0;
-  long totalRadioInterfered = 0;
-  long totalRadioIdle = 0;
-  long totalRadioOff = 0; 
+    public void accumulateRadioOn(long t) {
+      on += t;      
+    }
 
-    // iPAS: states in multiple transmission powers
-  private int lastRadioTxPowerIndicator;
-  long [] radioTxPower;
-  long [] totalRadioTxPower;
+    public void accumulateRadioTx(long t, int i) {
+      tx += t;
+      multiTx[i] += t;
+    }
+    
+    public void accumulateRadioRx(long t) {
+      rx += t;
+    }
 
+    public void accumulateRadioInterfered(long t) {
+      interfered += t;
+    }
+
+    public void accumulateRadioIdle(long t) {
+      idle += t;
+    }
+
+    public void accumulateRadioOff(long t) {
+      off += t;
+    }
+    
+  }
   
+  private RadioTimes radioTimes;
+  public RadioTimes radioTimesTotal;  
+  public RadioTimes radioTimesTotalSnapshot;
+  private int lastRadioTxIndicator; // iPAS: states in multiple transmission powers
+
+  //--------------------------------------------------------------------------  
+  // All modes of CPU, even Radio, are reported in mA, then powers are all in mW 
+    
   // Taken from SensorInfo.java, some taken from cooja/apps/powertracker/java/PowerTracker.java
   public static final long TICKS_PER_SECOND = 4096L;
-  public double VOLTAGE; /*= 2.4;*/ // Riccardo 2.4 | we can use our computed current battery voltage!!!!    
-  public static final double CURRENT_CPU[] = {1.800, 0.0545, /*WRONG! TODO FIXME*/ 0.0500 , 0.0110, 0.0011, 0.0002}; 
-  public static final double CURRENT_TRANSMIT = 17.7; //mA
-  public static final double CURRENT_LISTEN = 20.0;     //mA
-
-  public enum RadioState {
-    IDLE, RECEIVING, TRANSMITTING, INTERFERED
-  }
-
+  public double VOLTAGE; // Riccardo =2.4 | we can use our computed current battery voltage!!!!    
+  public static final double [] CURRENT_CPU = {1.800, 0.0545, /*WRONG! TODO FIXME*/ 0.0500 , 0.0110, 0.0011, 0.0002}; 
   
-  // All modes of CPU, even Radio, are reported in mA, then powers are all in mW 
   double getPowerCPU(int mode) {
     return CURRENT_CPU[mode] * VOLTAGE;
   }
-
-  double getPowerRadioTransmit() {
-    return CURRENT_TRANSMIT * VOLTAGE;
-  }
-
-  double getPowerRadioListen() {
-    return CURRENT_LISTEN * VOLTAGE;
-  }
-
+  
   void setVoltage(double v) {
     VOLTAGE = v;
   }
 
+  public enum RadioState {
+    IDLE, RECEIVING, TRANSMITTING, INTERFERED
+  }
   
+  public static class RadioCurrent { // mA
+    public static final double TX = 17.7;
+    public static final double RX = 20.0;
+    public static final double INTERFERED = 20.0;
+    public static final double IDLE = 20.0;
+    public static final double OFF = 0.0;    
+  } 
+  
+  //--------------------------------------------------------------------------  
   public PowerConsumption(final Simulation simulation, final Mote mote, double supplyVoltage) {
     this.simulation = simulation;
     this.mote = mote;
@@ -107,14 +183,13 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
 
     // to let cpu and radio inform their state changes to power consumption model
     cpu.addOperatingModeListener(this);
-    radio.addObserver(this);
-
-    totalRadioOn = totalRadioTx = totalRadioRx = totalRadioInterfered = totalRadioIdle = totalRadioOff = 0;
-    totalCpuModeTimes = new long[MSP430Constants.MODE_NAMES.length];
+    radio.addObserver(this);    
+    cpuModeTimesTotal = new long[MSP430Constants.MODE_NAMES.length];
+    cpuModeTimesTotalSnapshot = new long[MSP430Constants.MODE_NAMES.length];
     
-    // iPAS: for record multiple transmission power states
-    radioTxPower = new long[radio.getOutputPowerIndicatorMax()+1];
-    totalRadioTxPower = new long[radio.getOutputPowerIndicatorMax()+1];
+    radioTimes = new RadioTimes(radio.getOutputPowerIndicatorMax()+1);
+    radioTimesTotal = new RadioTimes(radio.getOutputPowerIndicatorMax()+1);
+    radioTimesTotalSnapshot = new RadioTimes(radio.getOutputPowerIndicatorMax()+1);
     
     initStats();
   }
@@ -126,7 +201,6 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
     cpuModeTimes = new long[MSP430Constants.MODE_NAMES.length];
 
     radioWasOn = radio.isRadioOn();
-    duration = radioOn = radioTx = radioRx = radioInterfered = radioIdle = radioOff = 0;
     if (radio.isTransmitting()) {
       lastRadioState = RadioState.TRANSMITTING;
     } else if (radio.isReceiving()) {
@@ -137,16 +211,21 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
       lastRadioState = RadioState.IDLE;
     }
     
-    // iPAS: reset all
-    for (int i = 0; i < radio.getOutputPowerIndicatorMax()+1; i++)
-      radioTxPower[i] = 0;
-    lastRadioTxPowerIndicator = radio.getCurrentOutputPowerIndicator();
+    radioTimes.reset();
+    
+    lastRadioTxIndicator = radio.getCurrentOutputPowerIndicator();
   }
 
   public void reset(){
     initStats();
   }
-
+  
+  public void dispose() {
+    radio.deleteObserver(this);
+    radio = null;
+    mote = null;
+  }
+  
   // --------------------------------------------------------------------------
   public void modeChanged(Chip source, int mode) { // Operating mode of the CPU has changed.
     // Some implement of the OperatingModeListener interface.
@@ -161,14 +240,17 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
   public void updateCPUStats() {
     long now = simulation.getSimulationTime();
     accumulateCPUModeTime(lastCPUMode, now - lastCPUUpdateTime);
-    //System.out.println ("CPU State changed from "+ MSP430Constants.MODE_NAMES[lastCPUMode] + " to "+ MSP430Constants.MODE_NAMES[cpu.getMode()]);
+    /*
+    System.out.println( "CPU State changed from " + 
+        MSP430Constants.MODE_NAMES[lastCPUMode] + " to " + 
+        MSP430Constants.MODE_NAMES[cpu.getMode()] );
+    */
     lastCPUMode = cpu.getMode();
     lastCPUUpdateTime = now;
   }
 
   // --------------------------------------------------------------------------
-  public void update(Observable o, Object arg) { // some implement of the Observer interface
-    //if (o instanceof Msp802154Radio)
+  public void update(Observable o, Object arg) { // some implement of the Observer interface    
     updateRadioStats();
   }
   
@@ -179,70 +261,63 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
       return;
  
     long now = simulation.getSimulationTime();
-
-    accumulateDuration(now - lastRadioUpdateTime);
+    long duration = now - lastRadioUpdateTime;
     
-    System.out.println("Event:"
-                       + radioEv
-                       + "\tWas"
-                       + lastRadioState
-                       + "\t"
-                       + (radioWasOn ? "radioWasON" : "radioWasOFF")
-                       + "\t"
-                       + (radio.isRadioOn() ? "radioIsOn" : "radioIsOff")
-                       + "\t"
-                       + (radio.isTransmitting() 
-                           ? "isTransmitting"
-                           : (radio.isReceiving()
-                               ? "isReceiving"
-                               : (radio.isInterfered() 
-                                   ? "isInterfered" 
-                                   : "isIdle") + "\ttime\t" + (now-lastRadioUpdateTime)) ) );
+    radioTimes.accumulateDuration(duration);
+    radioTimesTotal.accumulateDuration(duration);
     
-    // Radio on/off 
+    // Radio On/Off 
     if (radioWasOn) { // Since previous time
-      accumulateRadioOn(now - lastRadioUpdateTime);
+      radioTimes.accumulateRadioOn(duration);
+      radioTimesTotal.accumulateRadioOn(duration);
       
-      // Radio tx/rx 
+      // Radio TX/RX
       if (lastRadioState == RadioState.TRANSMITTING) {    
-          accumulateRadioTx(now - lastRadioUpdateTime);
-          //System.out.println("Radio Status: TX" + radio.isTransmitting() + 
-          //    "\tRX" + radio.isReceiving() + 
-          //    "\tON" + radio.isRadioOn() + 
-          //    "\tINT" +  radio.isInterfered() ); 
-          accumulateRadioTxPower(now - lastRadioUpdateTime);
-          
+        radioTimes.accumulateRadioTx(duration, lastRadioTxIndicator);
+        radioTimesTotal.accumulateRadioTx(duration, lastRadioTxIndicator);     
+        
       } else if (lastRadioState == RadioState.RECEIVING) {
-          accumulateRadioRx(now - lastRadioUpdateTime);
+        radioTimes.accumulateRadioRx(duration);
+        radioTimesTotal.accumulateRadioRx(duration);
+      
       } else if (lastRadioState == RadioState.INTERFERED) {
-          accumulateRadioIntefered(now - lastRadioUpdateTime);
+        radioTimes.accumulateRadioInterfered(duration);
+        radioTimesTotal.accumulateRadioInterfered(duration);
+        
       } else if (lastRadioState == RadioState.IDLE) {
-          accumulateRadioIdle(now - lastRadioUpdateTime);
+        radioTimes.accumulateRadioIdle(duration);
+        radioTimesTotal.accumulateRadioIdle(duration);
+        
+      } else {
+        System.err.println("PowerConsumption: Wrong lastRadioState!!! Exiting....");
+        System.exit(-1);
       }
     } else {
-      accumulateRadioOff(now - lastRadioUpdateTime);
+      radioTimes.accumulateRadioOff(duration);
+      radioTimesTotal.accumulateRadioOff(duration);
     }
     
     if (radio.isRadioOn()){ // Currently
       // Await next radio event 
       if (radio.isTransmitting()) {
-          lastRadioState = RadioState.TRANSMITTING;
+        lastRadioState = RadioState.TRANSMITTING;
+
+        /*
+        System.out.format("TX power of Mote %d: %f %d\n", // iPAS
+            mote.getID(), 
+            radio.getCurrentOutputPower(), 
+            radio.getCurrentOutputPowerIndicator()
+            ); // It's a level of 0-31 where the max, '31', == 0 dBm          
+        */
+        lastRadioTxIndicator = radio.getCurrentOutputPowerIndicator();
           
-          System.out.format("Current output power of Mote %d: %f %d\n", // iPAS
-              mote.getID(), 
-              radio.getCurrentOutputPower(), 
-              radio.getCurrentOutputPowerIndicator()
-              ); // It's a level of 0-31 where the max, '31', == 0 dBm          
-          lastRadioTxPowerIndicator = radio.getCurrentOutputPowerIndicator();
-                    
-      } /*else if (!radio.isRadioOn()) {
-          lastRadioState = RadioState.IDLE;
-      }*/ else if (radio.isInterfered()) {
-          lastRadioState = RadioState.INTERFERED;
-      } else if (radio.isReceiving()) {
-          lastRadioState = RadioState.RECEIVING;
+      } /*else if (!radio.isRadioOn()) { lastRadioState = RadioState.IDLE; }*/ 
+        else if (radio.isReceiving()) {
+        lastRadioState = RadioState.RECEIVING;
+      } else if (radio.isInterfered()) {
+        lastRadioState = RadioState.INTERFERED;
       } else {
-          lastRadioState = RadioState.IDLE;
+        lastRadioState = RadioState.IDLE;
       }
     }
 
@@ -251,80 +326,40 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
   }
 
   // -------------------------------------------------------------------------- 
-  public String radioStatistics() {
-    return radioStatistics(true, true);
+  private double calculateCPUEnergy(long [] times) { // usec x mW
+    return times[MSP430Constants.MODE_ACTIVE] * getPowerCPU(MSP430Constants.MODE_ACTIVE)
+         + times[MSP430Constants.MODE_LPM0]   * getPowerCPU(MSP430Constants.MODE_LPM0)
+         + times[MSP430Constants.MODE_LPM1]   * getPowerCPU(MSP430Constants.MODE_LPM1)
+         + times[MSP430Constants.MODE_LPM2]   * getPowerCPU(MSP430Constants.MODE_LPM2)
+         + times[MSP430Constants.MODE_LPM3]   * getPowerCPU(MSP430Constants.MODE_LPM3)
+         + times[MSP430Constants.MODE_LPM4]   * getPowerCPU(MSP430Constants.MODE_LPM4);        
   }
 
-  public String radioStatistics(boolean radioHW, boolean radioRXTX) {
-    StringBuilder sb = new StringBuilder();      
-
-    if (radioHW) {
-      sb.append(String.format("ON " + (radioOn + " us ") + "%2.2f %%", 100.0*radioOn/duration) + "\n");
-    }
-    if (radioRXTX) {
-      sb.append(String.format("TX " + (radioTx + " us ") + "%2.2f %%", 100.0*radioTx/duration) + "\n");
-      sb.append(String.format("RX " + (radioRx + " us ") + "%2.2f %%", 100.0*radioRx/duration) + "\n");
-      sb.append(String.format("INT " + (radioInterfered + " us ") + "%2.2f %%", 100.0*radioInterfered/duration) + "\n");
-      sb.append(String.format("RX " + (radioIdle + " us ") + "%2.2f %%", 100.0*radioIdle/duration) + "\n");
-    }
-    
-    return sb.toString();
-  }
-
-  // --------------------------------------------------------------------------  
-  protected void accumulateDuration(long t) {
-    duration += t;
-  }
-
-  protected void accumulateRadioOn(long t) {
-    radioOn += t;
-    totalRadioOn += t;
-  }
-
-  protected void accumulateRadioTx(long t) {
-    radioTx += t; 
-    totalRadioTx += t;
+  private double calculateRadioEnergyTx(RadioTimes rt) { // usec x mW
+    return rt.tx * RadioCurrent.TX * VOLTAGE; 
   }
   
-  protected void accumulateRadioTxPower(long t) { // iPAS: 
-    radioTxPower[lastRadioTxPowerIndicator] += t;
-    totalRadioTxPower[lastRadioTxPowerIndicator] += t;
+  private double calculateRadioEnergyStandby(RadioTimes rt) { // usec x mW
+    return (
+        (rt.rx         * RadioCurrent.RX         ) +        
+        (rt.interfered * RadioCurrent.INTERFERED ) +
+        (rt.idle       * RadioCurrent.IDLE       )) * VOLTAGE;
   }
   
-  protected void accumulateRadioRx(long t) {
-    radioRx += t; 
-    totalRadioRx += t;
+  private double calculateRadioEnergySleep(RadioTimes rt) { // usec x mW
+    return rt.off * RadioCurrent.OFF * VOLTAGE;
   }
-
-  protected void accumulateRadioIntefered(long t) {
-    radioInterfered += t; 
-    totalRadioInterfered += t;
+  
+  private double calculateRadioEnergy(RadioTimes rt) { // usec x mW
+    return calculateRadioEnergyTx(rt) + calculateRadioEnergyStandby(rt) + calculateRadioEnergySleep(rt);
   }
-
-  protected void accumulateRadioIdle(long t) {
-    radioIdle += t; 
-    totalRadioIdle += t;
+  
+  // --------------------------------------------------------------------------
+  public long getCPUTimeInActive() {
+    return cpuModeTimes[MSP430Constants.MODE_ACTIVE];
   }
-
-  protected void accumulateRadioOff(long t) {
-    radioOff += t; 
-    totalRadioOff += t;
-  }
-
-  protected void accumulateCPUModeTime(int mode, long t) {
-    cpuModeTimes[mode]+= t;
-    totalCpuModeTimes[mode]+= t;
-  }
-
-  public long getRadioONTimeInRxMode() { 
-    return radioOn - radioTx;
-  }
-
-  public long getTotalRadioONTimeInRxMode() {
-    return totalRadioOn - totalRadioTx;
-  }
-
-  public long getTimeInLPM() {
+  
+  public long getCPUTimeInLPM() {
     return cpuModeTimes[MSP430Constants.MODE_LPM0]
         + cpuModeTimes[MSP430Constants.MODE_LPM1]
         + cpuModeTimes[MSP430Constants.MODE_LPM2]
@@ -332,86 +367,94 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
         + cpuModeTimes[MSP430Constants.MODE_LPM4];
   }
   
-  // --------------------------------------------------------------------------
-  public double getTotalConsumedEnergyByCPU() {
-    return totalCpuModeTimes[MSP430Constants.MODE_ACTIVE] * getPowerCPU(MSP430Constants.MODE_ACTIVE)
-        + totalCpuModeTimes[MSP430Constants.MODE_LPM0] * getPowerCPU(MSP430Constants.MODE_LPM0)
-        + totalCpuModeTimes[MSP430Constants.MODE_LPM1] * getPowerCPU(MSP430Constants.MODE_LPM1)
-        + totalCpuModeTimes[MSP430Constants.MODE_LPM2] * getPowerCPU(MSP430Constants.MODE_LPM2)
-        + totalCpuModeTimes[MSP430Constants.MODE_LPM3] * getPowerCPU(MSP430Constants.MODE_LPM3)
-        + totalCpuModeTimes[MSP430Constants.MODE_LPM4] * getPowerCPU(MSP430Constants.MODE_LPM4);       
-  }
-
-  public double getTotalConsumedEnergyByRadioTx() {
-    return totalRadioTx * getPowerRadioTransmit(); // iPAS: Original model by Raza
-    
-  }
-  
-  public double getTotalConsumedEnergyByRadio() {
-    return getTotalRadioONTimeInRxMode() * getPowerRadioListen() + getTotalConsumedEnergyByRadioTx();    
-  }
-
-  public double getTotalConsumedEnergy() { // From 'per micro second' to 'per second'
-    return (getTotalConsumedEnergyByCPU() + getTotalConsumedEnergyByRadio()) / (double)1000000.0;
-  }
-
-  // --------------------------------------------------------------------------
-  public double getConsumedEnergyByCPU() {
-    return cpuModeTimes[MSP430Constants.MODE_ACTIVE] * getPowerCPU(MSP430Constants.MODE_ACTIVE)
-        + cpuModeTimes[MSP430Constants.MODE_LPM0] * getPowerCPU(MSP430Constants.MODE_LPM0)
-        + cpuModeTimes[MSP430Constants.MODE_LPM1] * getPowerCPU(MSP430Constants.MODE_LPM1)
-        + cpuModeTimes[MSP430Constants.MODE_LPM2] * getPowerCPU(MSP430Constants.MODE_LPM2)
-        + cpuModeTimes[MSP430Constants.MODE_LPM3] * getPowerCPU(MSP430Constants.MODE_LPM3)
-        + cpuModeTimes[MSP430Constants.MODE_LPM4] * getPowerCPU(MSP430Constants.MODE_LPM4);
-  }
-  
-  public double getConsumedEnergyByRadioTx() { 
-    return radioTx * getPowerRadioTransmit(); // iPAS: Original model by Raza
-    
-  }
-  
-  public double getConsumedEnergyByRadio() {
-    return getRadioONTimeInRxMode() * getPowerRadioListen() + getConsumedEnergyByRadioTx();
-  }  
-  
-  public double getConsumedEnergy() {
-    return getConsumedEnergyByCPU() + getConsumedEnergyByRadio();
+  public double getTotalConsumedEnergy() {     
+    return ( // mJ on micro seconds div by 1e6 to converse
+        calculateCPUEnergy(cpuModeTimesTotal) + 
+        calculateRadioEnergy(radioTimesTotal)) / (double)1000000.0;
   }
   
   public double getAveragePower() { // return average power consumption by radio and cpu in mW 
     updateCPUStats();
     updateRadioStats();
-    return getConsumedEnergy() / (cpuModeTimes[MSP430Constants.MODE_ACTIVE] + getTimeInLPM());
+    return 
+        calculateCPUEnergy(cpuModeTimes) / (getCPUTimeInActive() + getCPUTimeInLPM()) + 
+        calculateRadioEnergy(radioTimes) / radioTimes.duration;
   }
 
   // --------------------------------------------------------------------------
-  public double percentageTimeInTx() {
-    long timeInLPM = getTimeInLPM();
-    return (100.0 * radioTx) / (double) (cpuModeTimes[MSP430Constants.MODE_ACTIVE] + timeInLPM);
+  public static double percentage(long num, long den) {
+    return (double)(100 * num) / den;
   }
 
-  public double percentageTimeInRx() {
-    long timeInLPM = getTimeInLPM();
-    return 100.0 * (radioOn - radioTx)
-           / (double) (cpuModeTimes[MSP430Constants.MODE_ACTIVE] + timeInLPM);
+  public double percentageTimeRadioTx(RadioTimes rt) {
+    return percentage(rt.tx, rt.duration);
+  }
+
+  public double percentageTimeRadioStandby(RadioTimes rt) {
+    return percentage(rt.on - rt.tx, rt.duration);
   }
 
   public double percentageTimeCPUActive() {
-    long timeInLPM = getTimeInLPM();
-    return 100.0 * cpuModeTimes[MSP430Constants.MODE_ACTIVE]
-           / (double) (cpuModeTimes[MSP430Constants.MODE_ACTIVE] + timeInLPM);
+    return (double)(100 * getCPUTimeInActive()) / (getCPUTimeInActive() + getCPUTimeInLPM());
   }
 
   public double percentageTimeCPUInLPM() {
-    long timeInLPM = getTimeInLPM();
-    return 100.0 * timeInLPM / (double) (cpuModeTimes[MSP430Constants.MODE_ACTIVE] + timeInLPM);
+    return (double)(100 * getCPUTimeInLPM()) / (getCPUTimeInActive() + getCPUTimeInLPM());
   }
 
   // --------------------------------------------------------------------------
-  public void dispose() {
-    radio.deleteObserver(this);
-    radio = null;
-    mote = null;
+  public String radioStatistics() {
+    return radioStatistics(true, true, true, false, radioTimesTotal, String.format("Mote %d: ", mote.getID()));
   }
 
+  public static String radioStatistics(boolean radioHW, 
+                                       boolean radioRXTX, 
+                                       boolean showDuration,
+                                       boolean showIdle,
+                                       RadioTimes rt, String prefix) {
+    // the idea is also brought from PowerTracker
+    StringBuilder sb = new StringBuilder();      
+    String fm = "%d us %2.2f %%\n";
+
+    if (showDuration) {
+      sb.append(prefix + String.format("MONITORED %d us\n", rt.duration));
+    }
+    if (radioHW) {
+      sb.append(prefix + String.format("ON " + fm, rt.on, percentage(rt.on, rt.duration)));
+    }
+    if (radioRXTX) {
+      sb.append(prefix + String.format("TX " + fm, rt.tx, percentage(rt.tx, rt.duration)));
+      sb.append(prefix + String.format("RX " + fm, rt.rx, percentage(rt.rx, rt.duration)));
+      sb.append(prefix + String.format("INT " + fm, rt.interfered, percentage(rt.interfered, rt.duration)));
+    }
+    if (showIdle) {
+      sb.append(prefix + String.format("IDLE " + fm, rt.idle, percentage(rt.idle, rt.duration)));
+    }
+    
+    return sb.toString();
+  }
+   
+  //--------------------------------------------------------------------------
+  public void snapStatistics() { // Keep snapshorts of CPU and Radio times
+    for (int i = 0; i < cpuModeTimesTotal.length; i++)
+      cpuModeTimesTotal[i] = cpuModeTimesTotalSnapshot[i];  
+    radioTimesTotalSnapshot.setMemberValuesAs(radioTimesTotal);
+  }
+  
+  public String getSnappedStatistics() {
+    StringBuilder sb = new StringBuilder();
+
+    double energyCPU = calculateCPUEnergy(cpuModeTimesTotalSnapshot) / 1e6;
+    double energyRadioTx = calculateRadioEnergyTx(radioTimesTotalSnapshot) / 1e6;
+    double energyRadioStandby = calculateRadioEnergyStandby(radioTimesTotalSnapshot) / 1e6;
+    double energyRadioSleep = calculateRadioEnergySleep(radioTimesTotalSnapshot) / 1e6;
+    
+    sb.append("cpu:mJ="  + energyCPU + ", ");
+    sb.append("tx:mJ=" + energyRadioTx + ", ");
+    sb.append("stby:mJ=" + energyRadioStandby + ", ");
+    sb.append("sleep:mJ=" + energyRadioSleep + ", ");
+    
+    return sb.toString();
+  }
+  
 }

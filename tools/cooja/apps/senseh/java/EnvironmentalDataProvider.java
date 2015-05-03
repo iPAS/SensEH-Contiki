@@ -1,7 +1,3 @@
-/**
- * 
- */
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
@@ -9,10 +5,15 @@ import java.io.IOException;
 
 
 /**
+ * SensEH Project
+ * Originated by 
  * @author raza
- *
+ * @see http://usmanraza.github.io/SensEH-Contiki/
+ * 
+ * Adopted and adapted by 
+ * @author ipas
+ * @since 2015-05-01
  */
-
 public class EnvironmentalDataProvider {
 	
 	private String traceFile; 

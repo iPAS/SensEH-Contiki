@@ -5,13 +5,19 @@ import java.io.IOException;
 
 
 /**
+ * SensEH Project
+ * Originated by 
  * @author raza
- * reads the configuration of the full energy harvesting system
- * and intializes the system
+ * @see http://usmanraza.github.io/SensEH-Contiki/
+ * 
+ * 'EHSystem' reads the configuration of the full energy harvesting system
+ *   and initializes the system.
+ * 
+ * Adopted and adapted by 
+ * @author ipas
+ * @since 2015-05-01
  */
-
-// EHSystem put all the pieces together
-public class EHSystem {
+public class EHSystem { // EHSystem put all the pieces together
 
 	private double totalHarvestedEnergy;
 	private EnergySource source;
@@ -22,22 +28,27 @@ public class EHSystem {
 	private double chargeInterval;
 	private int nodeID; 
 
-	public double getChargeInterval (){
+	
+	public double getChargeInterval() {
 		return chargeInterval;
 	}
 
-	public EnergyStorage getStorage(){
+	public EnergyStorage getStorage() {
     return storage;
+  }
+
+  public Harvester getHarvester() {
+    return harvester;
   }
 
   public double getVoltage() {
     return storage.getVoltage() * storage.getNumStorages();
   }
   
-  public Harvester getHarvester() {
-    return harvester;
+  public double getTotalHarvestedEnergy() {
+    return totalHarvestedEnergy;
   }
-
+  
   
 	public EHSystem(String configFile, int node){
     this.nodeID = node;
@@ -46,7 +57,6 @@ public class EHSystem {
     harvester = null;
     storage = null;
     enviornmentalDataProvider = null;
-		//System.out.println (configFile + "\t" +node); 
 
     // Load configuration
     Properties config = new Properties();
@@ -102,49 +112,45 @@ public class EHSystem {
 	    
 	}
 		
-	public void harvestCharge(){
-	  // TODO: Check the units of different quantities
-	  
-		// read the next value from environmental trace file
-    double envValue = enviornmentalDataProvider.getNext(); // read luxs
+	public void harvestCharge(){ // TODO: Check the units of different quantities	  
+		// Read the next value from environmental trace file
+    double envValue = enviornmentalDataProvider.getNext(); // luxs
 		
-		// calculate the output power for the source for given environmental conditions
+		// Calculate the output power for the source for given environmental conditions
 		// TODO: handle the out of range values of outputpower. 
 		// If envValue is too large, we should get maximum output power 
 		//  that can be taken from source. It should not be arbitrary large
     double sourceOutputPower = source.getOutputPower(envValue) / 1000; // microWatts / 1000 = milliWatts
 		//System.out.println ("Power  = "+ sourceOutputPower + " mW");
 
-    // get current cummulative voltage for all batteries
+    // Get current cummulative voltage for all batteries
     double volts = storage.getVoltage() * storage.getNumStorages();
     //System.out.println ("Current Voltage  = "+ volts + " V");
 
-    // get the efficiency of the harvester at given volts and output power
+    // Get the efficiency of the harvester at given volts and output power
     double harvEfficiency = harvester.getEfficiency(sourceOutputPower, volts);
     //System.out.println ("harvester efficiency  = "+ (harvEfficiency *100)+ "%");
 
-		// calculating the charge actually going to the battery
-    double energy = source.getOutputEnergy(envValue, chargeInterval) 
-        * harvEfficiency / 1000; // micro joules / 1000 = millijoules
+		// Calculating the charge actually going to the battery
+    double energy = source.getOutputEnergy(envValue, chargeInterval) * harvEfficiency / 1000; // mJ
+
     //System.out.println ("energy to battery  = "+ energy);
     //System.out.println (" , lux: " + envValue + ", harv pow "+ (harvEfficiency*sourceOutputPower*1000) + " harv en  "+ energy); 
-    //System.out.println ("harvester efficiency  = "+ (harvEfficiency *100)+ "%");
-    // add the charge to the battery
+    //System.out.println ("harvester efficiency  = "+ (harvEfficiency *100)+ "%"); 
+    
+    // Add the charge to the battery    
     storage.charge(energy);
     totalHarvestedEnergy += energy;
 		//System.out.println (storage.getVoltage());
 	}
 
-  public double getTotalHarvestedEnergy() {
-    return totalHarvestedEnergy;
+  // To be called by PowerConsumption and Leakage Models periodically
+  public void consumeCharge(double energyConsumed) {
+    storage.discharge(energyConsumed);
   }
 	
-	// To be called by PowerConsumption and Leakage Models periodically
-	public void consumeCharge (double energyConsumed){
-		storage.discharge(energyConsumed); 
-	}
-
-	
+  
+  // --------------------------------------------------------------------------
 	/**
    * Main for testing
    * @param args

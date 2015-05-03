@@ -8,17 +8,21 @@
 TIMEOUT(60000, log.testOK());
 counter=0;
 
-while (counter<10) {
+while (counter < 30) {
   counter++;
   
   GENERATE_MSG(1000, "wait");
   YIELD_THEN_WAIT_UNTIL(msg.equals("wait"));
 
+  log.log("------------------------------------------------\n");
+  log.log("Round: " + counter + "\n");
+
   /* Extract SensEH statistics */
   //plugin = mote.getSimulation().getGUI().getStartedPlugin("SensEHGUI");
   plugin = sim.getGUI().getStartedPlugin("SensEHGUI");
   if (plugin != null) {
-    log.log("SensEH:\n" + plugin.getHarvestingStatistics() + "\n");
+    //log.log("SensEH:\n" + plugin.getStatistics() + "\n");
+	log.log("SensEH:\n" + plugin.radioStatistics() + "\n");
   } else {
     log.log("No SensEH plugin\n");
   }
