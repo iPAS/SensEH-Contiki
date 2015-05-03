@@ -4,13 +4,16 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 
-/**
- * 
- */
 
 /**
+ * SensEH Project
+ * Originated by 
  * @author raza
- *
+ * @see http://usmanraza.github.io/SensEH-Contiki/
+ * 
+ * Adopted and adapted by 
+ * @author ipas
+ * @since 2015-05-01
  */
 public class LookupTable3D {
 

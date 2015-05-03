@@ -5,6 +5,16 @@ import se.sics.cooja.Simulation;
 import se.sics.cooja.mspmote.SkyMote;
 
 
+/**
+ * SensEH Project
+ * Originated by 
+ * @author raza
+ * @see http://usmanraza.github.io/SensEH-Contiki/
+ * 
+ * Adopted and adapted by 
+ * @author ipas
+ * @since 2015-05-01
+ */
 @ClassDescription("A node with Energy Harvesting")
 public class EHNode{
 
@@ -17,12 +27,28 @@ public class EHNode{
   private PowerConsumption consumption; 
   private int nodeID; 
   
+  private double lastEnergyConsumed;
+  private double lastTotalEnergyConsumed;
+  
+  
   public EHSystem getEHSystem() {
     return ehSys; 
   }
   
   public PowerConsumption getPowerConsumption() {
     return consumption;
+  }
+  
+  public int getNodeID() {
+    return nodeID;
+  }
+  
+  public double getLastEnergyConsumed() {
+    return lastEnergyConsumed;
+  }
+
+  public double getLastTotalEnergyConsumed() {
+    return lastTotalEnergyConsumed;
   }
   
 
@@ -36,16 +62,10 @@ public class EHNode{
     consumption = new PowerConsumption(simulation, mote, ehSys.getVoltage());
   }
 
-  public void printStats() {
-    System.out.println(this.nodeID + "\t" + 
-        ehSys.getTotalHarvestedEnergy() + "\t" + 
-        consumption.getTotalConsumedEnergy());
-  }
-
   public void updateCharge(){ // iPAS: the EH system model of the node
     chargeStorage();
     dischargeConsumption();
-    consumption.setVoltage(ehSys.getVoltage()); 
+    consumption.setVoltage(ehSys.getVoltage()); // Assume that it's fixed, and regulated. 
   }
 
   private void chargeStorage(){
@@ -54,7 +74,9 @@ public class EHNode{
 
   private void dischargeConsumption(){
     double energyConsumed = ehSys.getChargeInterval() /*sec*/ * consumption.getAveragePower() /*mW*/;
+    consumption.snapStatistics(); // Snap the consumed energy at the time    
     ehSys.consumeCharge(energyConsumed);
     consumption.reset();
   }
+    
 }

@@ -1,8 +1,13 @@
 /**
+ * SensEH Project
+ * Originated by 
  * @author raza
- *
+ * @see http://usmanraza.github.io/SensEH-Contiki/
+ * 
+ * Adopted and adapted by 
+ * @author ipas
+ * @since 2015-05-01
  */
-
 public class Point {
 	private double x;
 	private double y;
