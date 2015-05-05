@@ -22,7 +22,7 @@ while (counter < 30) {
   plugin = sim.getGUI().getStartedPlugin("SensEHGUI");
   if (plugin != null) {
     //log.log("SensEH:\n" + plugin.getStatistics() + "\n");
-	log.log("SensEH:\n" + plugin.radioStatistics() + "\n");
+	log.log("SensEH: Cumulative Energies Statistics\n" + plugin.radioStatistics() + "\n");
   } else {
     log.log("No SensEH plugin\n");
   }
@@ -31,7 +31,7 @@ while (counter < 30) {
   //plugin = mote.getSimulation().getGUI().getStartedPlugin("PowerTracker");
   plugin = sim.getGUI().getStartedPlugin("PowerTracker");
   if (plugin != null) {
-    log.log("PowerTracker:\n" + plugin.radioStatistics() + "\n");
+    log.log("PowerTracker: Cumulative Energies Statistics\n" + plugin.radioStatistics() + "\n");
   } else {
     log.log("No PowerTracker plugin\n");
   }

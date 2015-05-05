@@ -7,11 +7,11 @@ import se.sics.cooja.mspmote.SkyMote;
 
 /**
  * SensEH Project
- * Originated by 
+ * Originated by
  * @author raza
  * @see http://usmanraza.github.io/SensEH-Contiki/
- * 
- * Adopted and adapted by 
+ *
+ * Adopted and adapted by
  * @author ipas
  * @since 2015-05-01
  */
@@ -20,29 +20,29 @@ public class EHNode{
 
   private static Logger logger = Logger.getLogger(EHNode.class);
 
-  private Simulation simulation;  
+  private Simulation simulation;
+  private int nodeID;
   private Mote mote;
   private EHSystem ehSys;
   private Pin storageMotePin;
-  private PowerConsumption consumption; 
-  private int nodeID; 
-  
+  private PowerConsumption consumption;
+
   private double lastEnergyConsumed;
   private double lastTotalEnergyConsumed;
-  
-  
+
+
   public EHSystem getEHSystem() {
-    return ehSys; 
+    return ehSys;
   }
-  
+
   public PowerConsumption getPowerConsumption() {
     return consumption;
   }
-  
+
   public int getNodeID() {
     return nodeID;
   }
-  
+
   public double getLastEnergyConsumed() {
     return lastEnergyConsumed;
   }
@@ -50,13 +50,13 @@ public class EHNode{
   public double getLastTotalEnergyConsumed() {
     return lastTotalEnergyConsumed;
   }
-  
+
 
   public EHNode(int nodeID, Simulation simulation, String configFilePath) {
     this.nodeID = nodeID + 1;
     this.simulation = simulation;
     mote = simulation.getMote(nodeID);
-    
+
     ehSys = new EHSystem(configFilePath, this.nodeID);
     storageMotePin = new Pin(ehSys.getStorage(), (SkyMote)mote);
     consumption = new PowerConsumption(simulation, mote, ehSys.getVoltage());
@@ -65,18 +65,18 @@ public class EHNode{
   public void updateCharge(){ // iPAS: the EH system model of the node
     chargeStorage();
     dischargeConsumption();
-    consumption.setVoltage(ehSys.getVoltage()); // Assume that it's fixed, and regulated. 
+    consumption.setVoltage(ehSys.getVoltage()); // Assume that it's fixed, and regulated.
   }
 
   private void chargeStorage(){
     ehSys.harvestCharge();
-  }  
+  }
 
   private void dischargeConsumption(){
     double energyConsumed = ehSys.getChargeInterval() /*sec*/ * consumption.getAveragePower() /*mW*/;
-    consumption.snapStatistics(); // Snap the consumed energy at the time    
+    consumption.snapStatistics(); // Snap the consumed energy at the time
     ehSys.consumeCharge(energyConsumed);
     consumption.reset();
   }
-    
+
 }

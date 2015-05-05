@@ -5,10 +5,10 @@
  * Mote mote, int id, String msg
  */
 
-TIMEOUT(60000, log.testOK());
+TIMEOUT(120000, log.testOK());
 counter=0;
 
-while (counter < 30) {
+while (counter < 120) {
   counter++;
   
   GENERATE_MSG(1000, "wait");
@@ -18,22 +18,11 @@ while (counter < 30) {
   log.log("Round: " + counter + "\n");
 
   /* Extract SensEH statistics */
-  //plugin = mote.getSimulation().getGUI().getStartedPlugin("SensEHGUI");
   plugin = sim.getGUI().getStartedPlugin("SensEHGUI");
   if (plugin != null) {
-    //log.log("SensEH:\n" + plugin.getStatistics() + "\n");
-	log.log("SensEH:\n" + plugin.radioStatistics() + "\n");
+	log.log("SensEH: Total Energies Statistics\n" + plugin.getStatistics() + "\n");
   } else {
     log.log("No SensEH plugin\n");
-  }
-
-  /* Extract PowerTracker statistics */
-  //plugin = mote.getSimulation().getGUI().getStartedPlugin("PowerTracker");
-  plugin = sim.getGUI().getStartedPlugin("PowerTracker");
-  if (plugin != null) {
-    log.log("PowerTracker:\n" + plugin.radioStatistics() + "\n");
-  } else {
-    log.log("No PowerTracker plugin\n");
   }
 
 }
