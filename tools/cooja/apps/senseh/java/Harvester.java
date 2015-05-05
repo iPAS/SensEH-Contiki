@@ -1,23 +1,21 @@
 /**
  * SensEH Project
- * Originated by 
+ * Originated by
  * @author raza
  * @see http://usmanraza.github.io/SensEH-Contiki/
- * 
- * Adopted and adapted by 
+ *
+ * Adopted and adapted by
  * @author ipas
  * @since 2015-05-01
  */
 public class Harvester {
 
 	private LookupTable3D EfficiencyLUT;
-	/**
-	 * 
-	 */
+
 	public Harvester(String name, String lookupTableFile) {
 		EfficiencyLUT = new LookupTable3D(name, lookupTableFile );
 	}
-	
+
 	public double getEfficiency(double inputPower, double batteryVoltage){
 		return EfficiencyLUT.getZ(inputPower, batteryVoltage);
 	}

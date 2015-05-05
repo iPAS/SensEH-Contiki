@@ -182,7 +182,7 @@
       <eh_config_file EXPORT="copy">[APPS_DIR]/senseh/config/EH.config</eh_config_file>
     </plugin_config>
     <width>329</width>
-    <z>2</z>
+    <z>6</z>
     <height>107</height>
     <location_x>8</location_x>
     <location_y>418</location_y>
@@ -206,7 +206,7 @@
       <viewport>2.294853963858941 0.0 0.0 2.294853963858941 28.498097587829246 96.20940980789942</viewport>
     </plugin_config>
     <width>400</width>
-    <z>6</z>
+    <z>1</z>
     <height>400</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
@@ -218,7 +218,7 @@
       <interface>Serial port</interface>
       <scrollpos>0,0</scrollpos>
     </plugin_config>
-    <width>350</width>
+    <width>278</width>
     <z>4</z>
     <height>231</height>
     <location_x>402</location_x>
@@ -230,16 +230,16 @@
       <scriptfile>[CONTIKI_DIR]/examples/ipas_senseh-txrange/senseh-tx.js</scriptfile>
       <active>true</active>
     </plugin_config>
-    <width>600</width>
+    <width>1024</width>
     <z>0</z>
     <height>705</height>
-    <location_x>767</location_x>
+    <location_x>343</location_x>
     <location_y>0</location_y>
   </plugin>
   <plugin>
     se.sics.cooja.plugins.SimControl
     <width>280</width>
-    <z>1</z>
+    <z>5</z>
     <height>160</height>
     <location_x>400</location_x>
     <location_y>0</location_y>
@@ -254,15 +254,15 @@
       <showLEDs />
       <zoomfactor>500.0</zoomfactor>
     </plugin_config>
-    <width>769</width>
-    <z>5</z>
+    <width>680</width>
+    <z>2</z>
     <height>166</height>
     <location_x>0</location_x>
     <location_y>539</location_y>
   </plugin>
   <plugin>
     PowerTracker
-    <width>400</width>
+    <width>319</width>
     <z>3</z>
     <height>139</height>
     <location_x>361</location_x>

@@ -21,13 +21,13 @@ import java.util.Collection;
 
 /**
  * SensEH Project
- * Originated by 
+ * Originated by
  * @author raza
  * @see http://usmanraza.github.io/SensEH-Contiki/
- * 
+ *
  * 'SensEHGUI' is a main module which has been run before the simulation begin.
- * 
- * Adopted and adapted by 
+ *
+ * Adopted and adapted by
  * @author ipas
  * @since 2015-05-01
  */
@@ -36,10 +36,11 @@ import java.util.Collection;
 public class SensEHGUI extends VisPlugin {
   private static Logger logger = Logger.getLogger(SensEHGUI.class);
 
-  private Simulation simulation;  
-  private EHNode [] ehNodes; 
+  private Simulation simulation;
+  private EHNode [] ehNodes;
 
-  private long startTime; /* uS */
+  private long startTime; // uS
+  private long lastUpdateTime; // uS
   private ChargeUpdateEvent chargeUpdateEvent;
   private long totalUpdates;
 
@@ -52,7 +53,7 @@ public class SensEHGUI extends VisPlugin {
   public SensEHGUI(Simulation simulation, final GUI gui) {
     super("SensEH Plugin", gui, false);
     this.simulation = simulation;
-    //consumption = new Consumption(simulation); 
+    //consumption = new Consumption(simulation);
 
     log.addPopupMenuItem(null, true); /* Create message list popup */
     add(new JScrollPane(log));
@@ -64,12 +65,13 @@ public class SensEHGUI extends VisPlugin {
     setSize(500, 200);
   }
 
+  @Override
   public void startPlugin() {
     super.startPlugin();
 
     if (ehConfigFile != null)
       return;
-    
+
     JFileChooser fileChooser = new JFileChooser();
     File suggest = new File(GUI.getExternalToolsSetting("DEFAULT_EH_CONFIG",
         "/home/user/contiki-2.7/tools/cooja/apps/senseh/config/EH.config"));
@@ -101,62 +103,68 @@ public class SensEHGUI extends VisPlugin {
   private double getChargeInterval() { // assume that charge update interval for ALL nodes is equal
     return ehNodes[0].getEHSystem().getChargeInterval();
   }
-  
+
+  @Override
   public void closePlugin() {
     chargeUpdateEvent.remove();
-    
+
     for (int i = 0; i < ehNodes.length; i++) {
-      ehNodes[i].getPowerConsumption().dispose(); 
+      ehNodes[i].getPowerConsumption().dispose();
     }
   }
 
-  // --------------------------------------------------------------------------  
+  // --------------------------------------------------------------------------
   private class ChargeUpdateTaskScheduler implements Runnable {
-    
+
+    @Override
     public void run() {
       totalUpdates = 1;
       startTime = simulation.getSimulationTime();
+      lastUpdateTime = 0; // It means never updated before.
       //logger.debug("periodStart: " + periodStart);
       chargeUpdateEvent = new ChargeUpdateEvent(0);
       chargeUpdateEvent.execute(startTime + (long)(getChargeInterval() * 1000000));
     }
-    
+
   }
-    
+
   // --------------------------------------------------------------------------
   private class ChargeUpdateEvent extends TimeEvent{
-    
+
     public ChargeUpdateEvent(long t) {
       super(t, "charge update event");
     }
 
+    @Override
     public void execute(long t) {
-      // Detect early events: reschedule for later 
+      // Detect early events: reschedule for later
       //System.out.println ("t\t"+t + "\tSimTime\t"+simulation.getSimulationTime());
       if (simulation.getSimulationTime() < t) {
         simulation.scheduleEvent(this, startTime + (long)(totalUpdates * getChargeInterval() * 1000000));
         return;
       }
 
+      lastUpdateTime = simulation.getSimulationTime();
       /* SensEH does NOT continuously count harvested energies and consumed energies.
        * It updates the charges periodically on every interval.
        */
       for (EHNode node : ehNodes) {
-        node.updateCharge(); // charge with harvested energy, and, discharge with consumed energy        
+        node.updateCharge(); // charge with harvested energy, and, discharge with consumed energy
       }
 
       // Now schedule the next event
       totalUpdates++;
-      long nextEventTime = startTime + (long)(totalUpdates * getChargeInterval() * 1000000); 
+      long nextEventTime = startTime + (long)(totalUpdates * getChargeInterval() * 1000000);
       if (simulation.getSimulationTime() <  nextEventTime) {
         simulation.scheduleEvent(this, nextEventTime);
         return;
       }
     }
-    
+
   }
 
   // --------------------------------------------------------------------------
+  @Override
   public Collection<Element> getConfigXML() {
     ArrayList<Element> configXML = new ArrayList<Element>();
     Element element;
@@ -171,7 +179,8 @@ public class SensEHGUI extends VisPlugin {
 
     return configXML;
   }
-  
+
+  @Override
   public boolean setConfigXML(Collection<Element> configXML, boolean visAvailable) {
     for (Element element : configXML) {
       String name = element.getName();
@@ -184,59 +193,63 @@ public class SensEHGUI extends VisPlugin {
 
     return true;
   }
-  
-  // --------------------------------------------------------------------------
-  public String getStatistics() {
-    StringBuilder sb = new StringBuilder();    
-    long lastUpdateTime = startTime + (long)((totalUpdates-1) * getChargeInterval() * 1000000);
-    
-    sb.append("@" + lastUpdateTime + "\n");
-    
-    for (EHNode node : ehNodes) {
-      int id  = node.getNodeID();
-      
-      EnergyStorage storage = node.getEHSystem().getStorage(); 
-      EHSystem ehsys = node.getEHSystem();
-      PowerConsumption consumption = node.getPowerConsumption();
-            
-//      consumption.getConsumedEnergyByCPU();
-//      consumption.getConsumedEnergyByRadioRx();
-//      consumption.getConsumedEnergyByRadioTx();
-      
-      sb.append("node="   + id + ", ");
-      sb.append("sto:mJ=" + storage.getEnergy() + ", ");
-      sb.append("eh:mJ="  + ehsys.getTotalHarvestedEnergy() + ", ");
-      sb.append(consumption.getSnappedStatistics());
-      sb.append("\n");
-    }    
-    
-    return sb.toString();
-  }
 
+  // --------------------------------------------------------------------------
   public String radioStatistics() {
     return radioStatistics(true, true, false);
   }
 
   public String radioStatistics(boolean radioHW, boolean radioRXTX, boolean onlyAverage) {
     StringBuilder sb = new StringBuilder();
-    
+
     /* Average */
-    PowerConsumption.RadioTimes radioTimesAVG = new PowerConsumption.RadioTimes(0); // omitting tx levels             
+    PowerConsumption.RadioTimes radioTimesAVG = new PowerConsumption.RadioTimes(0); // omitting tx levels
     for (EHNode node : ehNodes) {
       PowerConsumption consumption = node.getPowerConsumption();
-      radioTimesAVG.addMemberValuesWith(consumption.radioTimesTotal);
-    }    
-    sb.append(PowerConsumption.radioStatistics(radioHW, radioRXTX, 
-        false /* not show duration */, false /* not show idle */, radioTimesAVG, "AVG "));
+      radioTimesAVG.addMembersWith(consumption.radioTimesTotal);
+    }
+    radioTimesAVG.divMembersWith(ehNodes.length); // Average it!
+    sb.append(PowerConsumption.makeRadioSummaryStatistics(radioHW, radioRXTX,
+        false /* not show duration */, true /* not show idle */, radioTimesAVG, "AVG "));
 
     /* All nodes */
-    if (!onlyAverage) {
+    if (!onlyAverage)
       for (EHNode node : ehNodes) {
         PowerConsumption consumption = node.getPowerConsumption();
         sb.append(consumption.radioStatistics());
       }
+
+    return sb.toString();
+  }
+
+  public String radioTxStatistics() {
+    StringBuilder sb = new StringBuilder();
+    for (EHNode node : ehNodes) {
+      PowerConsumption consumption = node.getPowerConsumption();
+      sb.append(consumption.radioTxStatistics());
     }
-    
+    return sb.toString();
+  }
+
+  // --------------------------------------------------------------------------
+  public String getStatistics() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("@" + lastUpdateTime + " us\n");
+
+    for (EHNode node : ehNodes) {
+      int id  = node.getNodeID();
+
+      EnergyStorage storage = node.getEHSystem().getStorage();
+      EHSystem ehsys = node.getEHSystem();
+      PowerConsumption consumption = node.getPowerConsumption();
+
+      sb.append("node="   + id + ", ");
+      sb.append("sto:mJ=" + storage.getEnergy() + ", ");
+      sb.append("eh:mJ="  + ehsys.getTotalHarvestedEnergy() + ", ");
+      sb.append(consumption.getSnappedStatistics());
+      sb.append("\n");
+    }
+
     return sb.toString();
   }
 
