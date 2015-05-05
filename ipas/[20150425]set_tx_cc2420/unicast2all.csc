@@ -5,11 +5,10 @@
   <project EXPORT="discard">[APPS_DIR]/avrora</project>
   <project EXPORT="discard">[APPS_DIR]/serial_socket</project>
   <project EXPORT="discard">[APPS_DIR]/collect-view</project>
-  <project EXPORT="discard">[APPS_DIR]/powertracker</project>
   <project EXPORT="discard">[APPS_DIR]/senseh</project>
+  <project EXPORT="discard">[APPS_DIR]/powertracker</project>
   <simulation>
     <title>ipas_set-txrange</title>
-    <speedlimit>1.0</speedlimit>
     <randomseed>123456</randomseed>
     <motedelay_us>1000000</motedelay_us>
     <radiomedium>
@@ -26,9 +25,9 @@
       se.sics.cooja.mspmote.SkyMoteType
       <identifier>sky1</identifier>
       <description>MoteSkyType Unicast TxAdj</description>
-      <source EXPORT="discard">[CONTIKI_DIR]/examples/ipas_set-txrange/unicast2all.c</source>
+      <source EXPORT="discard">[CONTIKI_DIR]/ipas/[20150425]set_tx_cc2420/unicast2all.c</source>
       <commands EXPORT="discard">make unicast2all.sky TARGET=sky</commands>
-      <firmware EXPORT="copy">[CONTIKI_DIR]/examples/ipas_set-txrange/unicast2all.sky</firmware>
+      <firmware EXPORT="copy">[CONTIKI_DIR]/ipas/[20150425]set_tx_cc2420/unicast2all.sky</firmware>
       <moteinterface>se.sics.cooja.interfaces.Position</moteinterface>
       <moteinterface>se.sics.cooja.interfaces.RimeAddress</moteinterface>
       <moteinterface>se.sics.cooja.interfaces.IPAddress</moteinterface>

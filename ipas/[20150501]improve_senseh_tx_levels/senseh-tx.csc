@@ -25,9 +25,9 @@
       se.sics.cooja.mspmote.SkyMoteType
       <identifier>sky1</identifier>
       <description>SkyEH</description>
-      <source EXPORT="discard">[CONTIKI_DIR]/examples/ipas_senseh-txrange/senseh-tx.c</source>
+      <source EXPORT="discard">[CONTIKI_DIR]/ipas/[20150501]improve_senseh_tx_levels/senseh-tx.c</source>
       <commands EXPORT="discard">make senseh-tx.sky TARGET=sky</commands>
-      <firmware EXPORT="copy">[CONTIKI_DIR]/examples/ipas_senseh-txrange/senseh-tx.sky</firmware>
+      <firmware EXPORT="copy">[CONTIKI_DIR]/ipas/[20150501]improve_senseh_tx_levels/senseh-tx.sky</firmware>
       <moteinterface>se.sics.cooja.interfaces.Position</moteinterface>
       <moteinterface>se.sics.cooja.interfaces.RimeAddress</moteinterface>
       <moteinterface>se.sics.cooja.interfaces.IPAddress</moteinterface>
@@ -227,7 +227,7 @@
   <plugin>
     se.sics.cooja.plugins.ScriptRunner
     <plugin_config>
-      <scriptfile>[CONTIKI_DIR]/examples/ipas_senseh-txrange/senseh-tx.js</scriptfile>
+      <scriptfile>[CONTIKI_DIR]/ipas/[20150501]improve_senseh_tx_levels/senseh-tx.js</scriptfile>
       <active>true</active>
     </plugin_config>
     <width>1024</width>
