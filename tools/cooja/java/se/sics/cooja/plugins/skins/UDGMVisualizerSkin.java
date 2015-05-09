@@ -83,6 +83,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
 
   private Box top, ratioRX, ratioTX, rangeTX, rangeINT;
 
+  @Override
   public void setActive(Simulation simulation, Visualizer vis) {
     if (!(simulation.getRadioMedium() instanceof UDGM)) {
       logger.fatal("Cannot activate UDGM skin for unknown radio medium: " + simulation.getRadioMedium());
@@ -139,6 +140,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     successRatioRxSpinner.setToolTipText("Reception success ratio (%)");
 
     txRangeSpinner.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         radioMedium.setTxRange(((SpinnerNumberModel)
             txRangeSpinner.getModel()).getNumber().doubleValue());
@@ -147,6 +149,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     });
 
     interferenceRangeSpinner.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         radioMedium.setInterferenceRange(((SpinnerNumberModel)
             interferenceRangeSpinner.getModel()).getNumber().doubleValue());
@@ -155,6 +158,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     });
 
     successRatioTxSpinner.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         radioMedium.SUCCESS_RATIO_TX = ((SpinnerNumberModel)
             successRatioTxSpinner.getModel()).getNumber().doubleValue();
@@ -163,6 +167,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     });
 
     successRatioRxSpinner.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         radioMedium.SUCCESS_RATIO_RX = ((SpinnerNumberModel)
             successRatioRxSpinner.getModel()).getNumber().doubleValue();
@@ -213,6 +218,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     visualizer.getCurrentCanvas().add(top);
   }
 
+  @Override
   public void setInactive() {
     if (simulation == null) {
       /* Skin was never activated */
@@ -227,6 +233,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     visualizer.unregisterSimulationMenuAction(SuccessRatioMenuAction.class);
   }
 
+  @Override
   public Color[] getColorOf(Mote mote) {
     Mote selectedMote = visualizer.getSelectedMote();
     if (mote == selectedMote) {
@@ -235,31 +242,40 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     return null;
   }
 
+  @Override
   public void paintBeforeMotes(Graphics g) {
-    Mote [] motes = simulation.getMotes(); // iPAS, get all motes
-    for (int i = 0; i < motes.length; i++) {
-      Mote selectedMote = motes[i];
+    boolean hasToDoAll = true;
+
+    /* --- Original one of COOJA --- */
+    Mote selectedMote = visualizer.getSelectedMote();
+    if (simulation == null
+        || selectedMote == null
+        || selectedMote.getInterfaces().getRadio() == null) {
+      return;
+    }
+
+
+    // iPAS, get all motes
+    Mote [] motes = {selectedMote};
+    if (hasToDoAll)
+      motes = simulation.getMotes();
+
+    for (Mote mote : motes) {
+      selectedMote = mote;
       if (simulation == null
           || selectedMote == null
           || selectedMote.getInterfaces().getRadio() == null) {
         continue;
       }
 
-      /* --- original one ---
-      Mote selectedMote = visualizer.getSelectedMote();
-      if (simulation == null
-          || selectedMote == null
-          || selectedMote.getInterfaces().getRadio() == null) {
-        return;
-      }*/
-  
+
       /* Paint transmission and interference range for selected mote */
       Position motePos = selectedMote.getInterfaces().getPosition();
-  
+
       Point pixelCoord = visualizer.transformPositionToPixel(motePos);
       int x = pixelCoord.x;
       int y = pixelCoord.y;
-  
+
       // Fetch current output power indicator (scale with as percent)
       Radio selectedRadio = selectedMote.getInterfaces().getRadio();
       double moteInterferenceRange =
@@ -270,7 +286,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
         radioMedium.TRANSMITTING_RANGE
         * ((double) selectedRadio.getCurrentOutputPowerIndicator()
             / (double) selectedRadio.getOutputPowerIndicatorMax());
-  
+
       Point translatedZero = visualizer.transformPositionToPixel(0.0, 0.0, 0.0);
       Point translatedInterference =
         visualizer.transformPositionToPixel(moteInterferenceRange, moteInterferenceRange, 0.0);
@@ -280,7 +296,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
         visualizer.transformPositionToPixel(radioMedium.INTERFERENCE_RANGE, radioMedium.INTERFERENCE_RANGE, 0.0);
       Point translatedTransmissionMax =
         visualizer.transformPositionToPixel(radioMedium.TRANSMITTING_RANGE, radioMedium.TRANSMITTING_RANGE, 0.0);
-  
+
       translatedInterference.x = Math.abs(translatedInterference.x - translatedZero.x);
       translatedInterference.y = Math.abs(translatedInterference.y - translatedZero.y);
       translatedTransmission.x = Math.abs(translatedTransmission.x - translatedZero.x);
@@ -289,7 +305,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
       translatedInterferenceMax.y = Math.abs(translatedInterferenceMax.y - translatedZero.y);
       translatedTransmissionMax.x = Math.abs(translatedTransmissionMax.x - translatedZero.x);
       translatedTransmissionMax.y = Math.abs(translatedTransmissionMax.y - translatedZero.y);
-  
+
       /* Interference range */
       g.setColor(COLOR_INT);
       g.fillOval(
@@ -297,7 +313,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
           y - translatedInterference.y,
           2 * translatedInterference.x,
           2 * translatedInterference.y);
-  
+
       /* Transmission range */
       g.setColor(COLOR_TX);
       g.fillOval(
@@ -305,7 +321,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
           y - translatedTransmission.y,
           2 * translatedTransmission.x,
           2 * translatedTransmission.y);
-  
+
       /* Interference range (MAX) */
       g.setColor(Color.GRAY);
       g.drawOval(
@@ -313,18 +329,18 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
           y - translatedInterferenceMax.y,
           2 * translatedInterferenceMax.x,
           2 * translatedInterferenceMax.y);
-  
+
       /* Transmission range (MAX) */
       g.drawOval(
           x - translatedTransmissionMax.x,
           y - translatedTransmissionMax.y,
           2 * translatedTransmissionMax.x,
           2 * translatedTransmissionMax.y);
-  
-  
+
+
       FontMetrics fm = g.getFontMetrics();
       g.setColor(Color.BLACK);
-  
+
       /* Print transmission success probabilities */
       for (Mote m: simulation.getMotes()) {
       	if (m == selectedMote) {
@@ -341,23 +357,27 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
       	int msgWidth = fm.stringWidth(msg);
       	g.drawString(msg, pixel.x - msgWidth/2, pixel.y + 2*Visualizer.MOTE_RADIUS + 3);
       }
-      
+
     } // iPAS, End for each mote
 
   }
 
+  @Override
   public void paintAfterMotes(Graphics g) {
   }
 
   public static class RangeMenuAction implements SimulationMenuAction {
+    @Override
     public boolean isEnabled(Visualizer visualizer, Simulation simulation) {
       return true;
     }
 
+    @Override
     public String getDescription(Visualizer visualizer, Simulation simulation) {
       return "Change transmission ranges";
     }
 
+    @Override
     public void doAction(Visualizer visualizer, Simulation simulation) {
       VisualizerSkin[] skins = visualizer.getCurrentSkins();
       for (VisualizerSkin skin: skins) {
@@ -372,14 +392,17 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
   };
 
   public static class SuccessRatioMenuAction implements SimulationMenuAction {
+    @Override
     public boolean isEnabled(Visualizer visualizer, Simulation simulation) {
       return true;
     }
 
+    @Override
     public String getDescription(Visualizer visualizer, Simulation simulation) {
       return "Change TX/RX success ratio";
     }
 
+    @Override
     public void doAction(Visualizer visualizer, Simulation simulation) {
       VisualizerSkin[] skins = visualizer.getCurrentSkins();
       for (VisualizerSkin skin: skins) {
@@ -393,6 +416,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     }
   };
 
+  @Override
   public Visualizer getVisualizer() {
     return visualizer;
   }
