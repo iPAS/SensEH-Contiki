@@ -195,6 +195,28 @@ public class SensEHGUI extends VisPlugin {
   }
 
   // --------------------------------------------------------------------------
+  public void restartStoredEnergyStatistics() {
+    for (EHNode node : ehNodes) {
+      EnergyStorage storage = node.getEHSystem().getStorage();
+      storage.discharge(storage.getEnergy() * storage.getNumStorages()); // Drain all amount
+    }
+  }
+
+  public void restartHarvestedEnergyStatistics() {
+    for (EHNode node : ehNodes) {
+      EHSystem ehsys = node.getEHSystem();
+      ehsys.setTotalHarvestedEnergy(0);
+    }
+  }
+
+  public void restartConsumedEnergyStatistics() {
+    for (EHNode node : ehNodes) {
+      PowerConsumption consumption = node.getPowerConsumption();
+      consumption.restart(); // Reset total consumption
+    }
+  }
+
+  // --------------------------------------------------------------------------
   public String radioStatistics() {
     return radioStatistics(true, true, false);
   }
@@ -234,7 +256,7 @@ public class SensEHGUI extends VisPlugin {
   // --------------------------------------------------------------------------
   public String getStatistics() {
     StringBuilder sb = new StringBuilder();
-    sb.append("@" + lastUpdateTime + " us\n");
+    sb.append("Energies stats @" + lastUpdateTime + " us\n");
 
     for (EHNode node : ehNodes) {
       int id  = node.getNodeID();

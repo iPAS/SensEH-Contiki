@@ -20,6 +20,7 @@ import java.io.IOException;
 public class EHSystem { // EHSystem put all the pieces together
 
 	private double totalHarvestedEnergy;
+
 	private EnergySource source;
 	private Harvester harvester;
 	private EnergyStorage storage;
@@ -47,6 +48,10 @@ public class EHSystem { // EHSystem put all the pieces together
 
   public double getTotalHarvestedEnergy() {
     return totalHarvestedEnergy;
+  }
+
+  public void setTotalHarvestedEnergy(double energy_mj) { // iPAS: for hacking only
+    totalHarvestedEnergy = energy_mj;
   }
 
 
