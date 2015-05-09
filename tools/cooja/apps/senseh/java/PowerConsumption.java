@@ -184,6 +184,29 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
     public static final double OFF = 0.0;
   }
 
+  public static final double[] CURRENT_RADIO_TX = {
+      /**
+       * The data is referred from
+       * Dargie, Waltenegus, and Christian Poellabauer.
+       * "Fundamentals of wireless sensor networks: theory and practice."
+       * John Wiley & Sons, 2010.
+       *
+       * Lev. 3, −25 dBm, 8.5 mA
+       * Lev. 7, −15 dBm, 9.9 mA
+       * Lev. 11, −10 dBm, 11.2 mA
+       * Lev. 15, −7 dBm, 12.5 mA
+       * Lev. 19, −5 dBm, 13.9 mA
+       * Lev. 23, −3 dBm, 15.2 mA
+       * Lev. 27, −1 dBm, 16.5 mA
+       * Lev. 31, 0 dBm, 17.4 mA
+       *
+       * Then, be done a curve-fitting on http://mycurvefit.com/
+       */
+      7.645148, 7.935078, 8.233389, 8.539394, 8.852406,  9.17174, 9.496708, 9.826623, 10.1608, 10.49855,
+      10.83919, 11.18203, 11.52639, 11.87158, 12.21691, 12.56169, 12.90524, 13.24688, 13.58591, 13.92165,
+      14.25341, 14.58051, 14.90225, 15.21797, 15.52695, 15.82853, 16.12201, 16.40671, 16.68194, 16.94701,
+      17.20124, 17.44394,};
+
   //--------------------------------------------------------------------------
   public PowerConsumption(final Simulation simulation, final Mote mote, double supplyVoltage) {
     this.simulation = simulation;
@@ -196,6 +219,7 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
     // to let cpu and radio inform their state changes to power consumption model
     cpu.addOperatingModeListener(this);
     radio.addObserver(this);
+    cpuModeTimes = new long[MSP430Constants.MODE_NAMES.length];
     cpuModeTimesTotal = new long[MSP430Constants.MODE_NAMES.length];
     cpuModeTimesTotalSnapshot = new long[MSP430Constants.MODE_NAMES.length];
 
@@ -210,7 +234,7 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
     lastCPUUpdateTime = lastRadioUpdateTime = simulation.getSimulationTime();
 
     lastCPUMode = cpu.getMode();
-    cpuModeTimes = new long[MSP430Constants.MODE_NAMES.length];
+    cpuModeTimes = new long[MSP430Constants.MODE_NAMES.length]; // Reset
 
     radioWasOn = radio.isRadioOn();
     if (radio.isTransmitting()) {
@@ -223,13 +247,21 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
       lastRadioState = RadioState.IDLE;
     }
 
-    radioTimes.reset();
-
     lastRadioTxIndicator = radio.getCurrentOutputPowerIndicator();
+    radioTimes.reset();
   }
 
   public void reset(){
     initStats();
+  }
+
+  public void restart() {
+    cpuModeTimesTotal = new long[MSP430Constants.MODE_NAMES.length];
+    cpuModeTimesTotalSnapshot = new long[MSP430Constants.MODE_NAMES.length];
+
+    radioTimesTotal.reset();
+    radioTimesTotalSnapshot.reset();
+    reset();
   }
 
   public void dispose() {
@@ -350,7 +382,48 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
   }
 
   private double calculateRadioEnergyTx(RadioTimes rt) { // usec x mW
-    return rt.tx * RadioCurrent.TX * VOLTAGE;
+    /**
+     * Multiple transmission levels of CC2420 can be matched with their transmission powers
+     *  as results from:
+     *   https://www.mail-archive.com/tinyos-help@millennium.berkeley.edu/msg18454.html
+     *  where they calculate and fit the data into a square-root curve.
+     *  The results are yielded as following:
+     *
+     *  > PA_LEVEL:
+     *  > 31  30
+     *  > 29  28  27  26  25  24  23  22  21  20
+     *  > 19  18  17  16  15  14  13  12  11  10
+     *  >  9   8   7   6   5   4   3   2   1   0
+     *
+     *  > Output transmission power (dBm):
+     *  >   0       -0.0914
+     *  >  -0.3008  -0.6099  -1.0000  -1.4526  -1.9492  -2.4711  -3.0000  -3.5201  -4.0275  -4.5212
+     *  >  -5.0000  -5.4670  -5.9408  -6.4442  -7.0000  -7.6277  -8.3343  -9.1238 -10.0000 -10.9750
+     *  > -12.0970 -13.4200 -15.0000 -16.8930 -19.1530 -21.8370 -25.0000 -28.6970 -32.9840 -37.9170
+     *
+     *  > Output power (mW) into the air:
+     *  > 1.0000  0.9792
+     *  > 0.9331  0.8690  0.7943  0.7157  0.6384  0.5661  0.5012  0.4446  0.3956  0.3531
+     *  > 0.3162  0.2840  0.2546  0.2268  0.1995  0.1727  0.1467  0.1224  0.1000  0.0799
+     *  > 0.0617  0.0455  0.0316  0.0205  0.0122  0.0066  0.0032  0.0013  0.0005  0.0002
+     *
+     * Some experimental result of transmission power (in dBm) is also shared in:
+     *  http://tinyos-help.10906.n7.nabble.com/Output-power-at-each-power-level-from-0-to-31-for-CC2420-td10.html
+     *
+     * Anyway those aforementioned information do not give directly a current consumption in each level.
+     * But, you can find more resources in the book:
+     *  title={Fundamentals of wireless sensor networks: theory and practice},
+     *  author={Dargie, Waltenegus and Poellabauer, Christian},
+     *  year={2010},
+     *  publisher={John Wiley \& Sons}
+     */
+
+//  return rt.tx * RadioCurrent.TX * VOLTAGE; // Traditional static transmission power consumption model
+
+    double sum_tx_pow = 0;
+    for (int i = 0; i < rt.multiTx.length; i ++)
+      sum_tx_pow += rt.multiTx[i] * CURRENT_RADIO_TX[i];
+    return sum_tx_pow * VOLTAGE;
   }
 
   private double calculateRadioEnergyRxStandby(RadioTimes rt) { // usec x mW
@@ -397,7 +470,7 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
 
   // --------------------------------------------------------------------------
   public static double percentage(long num, long den) {
-    return (double)(100 * num) / den;
+    return (den > 0)? (double)(100 * num) / den  :  0;
   }
 
   public double percentageTimeRadioTx(RadioTimes rt) {
