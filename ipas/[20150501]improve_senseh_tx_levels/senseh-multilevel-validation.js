@@ -20,7 +20,6 @@ while (counter < 120) {
   /* Extract SensEH statistics */
   plugin = sim.getGUI().getStartedPlugin("SensEHGUI");
   if (plugin != null) {
-    log.log("SensEH: Total Energies Statistics\n" + plugin.getStatistics() + "\n");
     log.log("SensEH: Total Energies Statistics\n" + plugin.radioTxStatistics() + "\n");
   } else {
     log.log("No SensEH plugin\n");
