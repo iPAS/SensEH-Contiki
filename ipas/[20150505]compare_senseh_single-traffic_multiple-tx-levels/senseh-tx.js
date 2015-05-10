@@ -22,8 +22,8 @@ if (plugin == null) {
   log.testFailed();
 }
 
-showStats = function() {
-  log.log(plugin.getStatistics() + "\n"); // Extract SensEH statistics 
+showStats = function(lvl) {
+  log.log("tx_level=" + lvl + ", " + plugin.getStatistics() + "\n"); // Extract SensEH statistics 
   //log.testOK();
 };
 
@@ -37,7 +37,6 @@ for (var i = 0; i < sim.getMotesCount(); i++)
   marks.push(1);
 
 while (1) { // Wait them all to be ready
-  //log.log(msg + "\n");
   if (msg.search("Please input Tx level") > -1) {
     marks[id-1] = 0;
     if (marks.reduce(sum) == 0) 
@@ -51,20 +50,17 @@ while (1) { // Wait them all to be ready
  * Main script
  */
 for (var tx_level = 0; tx_level <= 31; tx_level++) {
-  log.log("Tx level = " + tx_level + "\n");
-  
   plugin.restartConsumedEnergyStatistics();
   plugin.restartStoredEnergyStatistics();
   plugin.restartHarvestedEnergyStatistics();  
   
   motes = sim.getMotes();
-  for(var i = 0; i < motes.length; i++){
-    write(motes[i], tx_level); 
-  }
+  for(var i = 0; i < motes.length; i++)
+    write(motes[i], tx_level);
 
   GENERATE_MSG(20000, "wait"); // Yield for another, then wait 
   YIELD_THEN_WAIT_UNTIL(msg.equals("wait")); // The node will be back to work again   
-  showStats();  
+  showStats(tx_level);  
 }
 
 log.testOK();

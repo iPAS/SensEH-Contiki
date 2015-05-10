@@ -256,7 +256,7 @@ public class SensEHGUI extends VisPlugin {
   // --------------------------------------------------------------------------
   public String getStatistics() {
     StringBuilder sb = new StringBuilder();
-    sb.append("Energies stats @" + lastUpdateTime + " us\n");
+    sb.append("update@:us=" + lastUpdateTime + "\n");
 
     for (EHNode node : ehNodes) {
       int id  = node.getNodeID();
