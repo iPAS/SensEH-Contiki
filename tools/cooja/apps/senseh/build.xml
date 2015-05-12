@@ -54,7 +54,8 @@
     </javac>
   </target>
 
-  <target name="clean" depends="init">
+  <!--target name="clean" depends="init"-->
+  <target name="clean" depends="">
     <delete dir="${build}"/>
     <delete dir="${lib}"/>
   </target>

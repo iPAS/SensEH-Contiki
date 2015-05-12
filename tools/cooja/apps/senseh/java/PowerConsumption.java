@@ -426,11 +426,16 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
     return sum_tx_pow * VOLTAGE;
   }
 
-  private double calculateRadioEnergyRxStandby(RadioTimes rt) { // usec x mW
-    return (
-        (rt.rx         * RadioCurrent.RX         ) +
-        (rt.interfered * RadioCurrent.INTERFERED ) +
-        (rt.idle       * RadioCurrent.IDLE       )) * VOLTAGE;
+  private double calculateRadioEnergyRx(RadioTimes rt) { // usec x mW
+    return (rt.rx * RadioCurrent.RX) * VOLTAGE;
+  }
+
+  private double calculateRadioEnergyInterfered(RadioTimes rt) { // usec x mW
+    return (rt.interfered * RadioCurrent.INTERFERED) * VOLTAGE;
+  }
+
+  private double calculateRadioEnergyIdle(RadioTimes rt) { // usec x mW
+    return (rt.idle * RadioCurrent.IDLE) * VOLTAGE;
   }
 
   private double calculateRadioEnergySleep(RadioTimes rt) { // usec x mW
@@ -438,7 +443,11 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
   }
 
   private double calculateRadioEnergy(RadioTimes rt) { // usec x mW
-    return calculateRadioEnergyTx(rt) + calculateRadioEnergyRxStandby(rt) + calculateRadioEnergySleep(rt);
+    return calculateRadioEnergyTx(rt) +
+        calculateRadioEnergyRx(rt) +
+        calculateRadioEnergyInterfered(rt) +
+        calculateRadioEnergyIdle(rt) +
+        calculateRadioEnergySleep(rt);
   }
 
   // --------------------------------------------------------------------------
@@ -551,11 +560,15 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
     StringBuilder sb = new StringBuilder();
     double energyCPU = calculateCPUEnergy(cpuModeTimesTotalSnapshot) / 1e6;
     double energyRadioTx = calculateRadioEnergyTx(radioTimesTotalSnapshot) / 1e6;
-    double energyRadioRxStandby = calculateRadioEnergyRxStandby(radioTimesTotalSnapshot) / 1e6;
+    double energyRadioRx = calculateRadioEnergyRx(radioTimesTotalSnapshot) / 1e6;
+    double energyRadioIdle = calculateRadioEnergyIdle(radioTimesTotalSnapshot) / 1e6;
+    double energyRadioInterfered = calculateRadioEnergyInterfered(radioTimesTotalSnapshot) / 1e6;
 
-    sb.append("cpu:mJ=" + energyCPU + ", ");
-    sb.append("rx:mJ="  + energyRadioRxStandby + ", ");
-    sb.append("tx:mJ="  + energyRadioTx);
+    sb.append("cpu:mJ="  + energyCPU + ", ");
+    sb.append("rx:mJ="   + energyRadioRx + ", ");
+    sb.append("int:mJ="  + energyRadioInterfered + ", ");
+    sb.append("idle:mJ=" + energyRadioIdle + ", ");
+    sb.append("tx:mJ="   + energyRadioTx);
 
     for (int i = 0; i < radioTimesTotalSnapshot.multiTx.length; i++) {
       sb.append(String.format(", tx%d:%%=%2.2f", i,

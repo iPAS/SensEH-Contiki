@@ -106,10 +106,12 @@ public class SensEHGUI extends VisPlugin {
 
   @Override
   public void closePlugin() {
-    chargeUpdateEvent.remove();
+    if (chargeUpdateEvent != null) {
+      chargeUpdateEvent.remove();
 
-    for (int i = 0; i < ehNodes.length; i++) {
-      ehNodes[i].getPowerConsumption().dispose();
+      for (int i = 0; i < ehNodes.length; i++) {
+        ehNodes[i].getPowerConsumption().dispose();
+      }
     }
   }
 
@@ -255,12 +257,17 @@ public class SensEHGUI extends VisPlugin {
 
   // --------------------------------------------------------------------------
   public String getStatistics() {
+    return getStatistics("");
+  }
+
+  public String getStatistics(String prefix) {
     StringBuilder sb = new StringBuilder();
-    sb.append("update@:us=" + lastUpdateTime + "\n");
 
     for (EHNode node : ehNodes) {
-      int id  = node.getNodeID();
+      sb.append(prefix);
+      sb.append("update:us=" + lastUpdateTime + ", ");
 
+      int id  = node.getNodeID();
       EnergyStorage storage = node.getEHSystem().getStorage();
       EHSystem ehsys = node.getEHSystem();
       PowerConsumption consumption = node.getPowerConsumption();
