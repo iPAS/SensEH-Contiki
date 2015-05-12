@@ -190,22 +190,11 @@
     </mote>
   </simulation>
   <plugin>
-    SensEHGUI
-    <plugin_config>
-      <eh_config_file EXPORT="copy">[APPS_DIR]/senseh/config/EH.config</eh_config_file>
-    </plugin_config>
-    <width>278</width>
-    <z>4</z>
-    <height>107</height>
-    <location_x>4</location_x>
-    <location_y>402</location_y>
-  </plugin>
-  <plugin>
     se.sics.cooja.plugins.SimControl
-    <width>280</width>
-    <z>1</z>
+    <width>133</width>
+    <z>2</z>
     <height>155</height>
-    <location_x>339</location_x>
+    <location_x>176</location_x>
     <location_y>2</location_y>
   </plugin>
   <plugin>
@@ -216,10 +205,10 @@
       <skin>se.sics.cooja.plugins.skins.GridVisualizerSkin</skin>
       <skin>se.sics.cooja.plugins.skins.TrafficVisualizerSkin</skin>
       <skin>se.sics.cooja.plugins.skins.UDGMVisualizerSkin</skin>
-      <viewport>3.1472282932922617 0.0 0.0 3.1472282932922617 162.5973909775944 48.861793768293914</viewport>
+      <viewport>3.1472282932922617 0.0 0.0 3.1472282932922617 74.59739097759439 30.86179376829393</viewport>
     </plugin_config>
-    <width>339</width>
-    <z>2</z>
+    <width>280</width>
+    <z>4</z>
     <height>417</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
@@ -230,19 +219,30 @@
       <scriptfile>[CONTIKI_DIR]/ipas/[20150505]compare_senseh_single-traffic_multiple-tx-levels/senseh-tx.js</scriptfile>
       <active>true</active>
     </plugin_config>
-    <width>906</width>
-    <z>0</z>
+    <width>1085</width>
+    <z>1</z>
     <height>705</height>
-    <location_x>461</location_x>
+    <location_x>282</location_x>
     <location_y>0</location_y>
   </plugin>
   <plugin>
-    PowerTracker
-    <width>371</width>
+    SensEHGUI
+    <plugin_config>
+      <eh_config_file EXPORT="copy">[APPS_DIR]/senseh/config/EH.config</eh_config_file>
+    </plugin_config>
+    <width>263</width>
     <z>3</z>
-    <height>271</height>
-    <location_x>2</location_x>
-    <location_y>456</location_y>
+    <height>96</height>
+    <location_x>3</location_x>
+    <location_y>608</location_y>
+  </plugin>
+  <plugin>
+    PowerTracker
+    <width>299</width>
+    <z>0</z>
+    <height>277</height>
+    <location_x>0</location_x>
+    <location_y>421</location_y>
   </plugin>
 </simconf>
 

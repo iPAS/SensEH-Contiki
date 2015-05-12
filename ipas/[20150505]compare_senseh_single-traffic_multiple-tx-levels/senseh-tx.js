@@ -10,8 +10,7 @@
  *   se.sics.cooja.Gui gui -- The GUI Gui.java
  */
 
-//TIMEOUT(120000, showStats());
-
+TIMEOUT(1980000, log.testFailed()); // DEFAULT=20min; thus, setting new
 
 /*
  * Initialize variables
@@ -23,7 +22,8 @@ if (plugin == null) {
 }
 
 showStats = function(lvl) {
-  log.log("tx_level=" + lvl + ", " + plugin.getStatistics() + "\n"); // Extract SensEH statistics 
+  prefix = "tx_level=" + lvl + ", ";
+  log.log(plugin.getStatistics(prefix) + "\n"); // Extract SensEH statistics 
   //log.testOK();
 };
 
@@ -49,6 +49,8 @@ while (1) { // Wait them all to be ready
 /*
  * Main script
  */
+//for (var tx_level = 0; tx_level <= 15; tx_level++) {
+//for (var tx_level = 16; tx_level <= 31; tx_level++) {
 for (var tx_level = 0; tx_level <= 31; tx_level++) {
   plugin.restartConsumedEnergyStatistics();
   plugin.restartStoredEnergyStatistics();
@@ -58,7 +60,7 @@ for (var tx_level = 0; tx_level <= 31; tx_level++) {
   for(var i = 0; i < motes.length; i++)
     write(motes[i], tx_level);
 
-  GENERATE_MSG(20000, "wait"); // Yield for another, then wait 
+  GENERATE_MSG(60000, "wait"); // Yield for another, then wait 
   YIELD_THEN_WAIT_UNTIL(msg.equals("wait")); // The node will be back to work again   
   showStats(tx_level);  
 }

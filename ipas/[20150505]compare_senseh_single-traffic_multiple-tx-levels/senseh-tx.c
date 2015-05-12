@@ -13,8 +13,8 @@
 #include <string.h>
 #include <stdio.h>
 
-#define NODE_COUNT  2
-
+#define NODE_COUNT  10
+#define TX_PERIOD   5
 /*
 PROCESS_BEGIN();      // Declares the beginning of a process' protothread.
 PROCESS_END();        // Declares the end of a process' protothread.
@@ -50,7 +50,8 @@ PROCESS_THREAD(unicast_process, ev, data) {
 
     while (1) {
         static struct etimer et;
-        etimer_set(&et, CLOCK_SECOND + (random_rand() % CLOCK_SECOND)); // Delay 1-2 seconds
+        etimer_set(&et, (TX_PERIOD * CLOCK_SECOND) + 
+            (random_rand() % (TX_PERIOD * CLOCK_SECOND))); // Delay the sending
         PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
         static rimeaddr_t addr = { { 1, 1 } };
