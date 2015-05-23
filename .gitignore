@@ -88,3 +88,7 @@ contiki-cc2530dk.lib
 #eclipse
 .cproject
 .project
+
+# Log files
+*.simlog
+*.testlog
