@@ -1,11 +1,10 @@
 
-#define DEBUG 0
+#define NODE_COUNT   10
 
-#define LS_TPC 1
 #define UNICAST_SEND 1
-
 #define TX_PERIOD    5
-#define NODE_COUNT   3
+
+#define DEBUG 0
 
 #include "contiki.h"
 #include "random.h"
@@ -25,7 +24,7 @@
 #define USER_DATA_LENGTH  16
 #define SET_TXPOWER_DELAY 100
 
-typedef enum {true, false} bool;
+typedef enum {false=0, true} bool;
 
 typedef enum {ANNOUNCEMENT, RSSI_REPORT, REQUEST_PING, RESPONSE_PING} message_type_t;
 typedef uint8_t txpower_t;
@@ -45,7 +44,10 @@ struct report_t {
 struct neighbor_t {
     struct report_t report;
 };
+
 static struct neighbor_t neighbor[NODE_COUNT];
+static uint8_t neighbor_found[NODE_COUNT];
+static uint8_t neighbor_found_count = 0;
 
 /*
 PROCESS_BEGIN();      // Declares the beginning of a process' protothread.
@@ -62,6 +64,17 @@ PROCESS_PAUSE();      // Temporarily yield the process.
 PROCESS(main_process, "Sending with TX-Power-Adjusted Specific for Each Node");
 AUTOSTART_PROCESSES(&main_process);
 /*---------------------------------------------------------------------------*/
+bool have_found_node(uint16_t addr) {
+    uint8_t i;
+    for (i = 0; i < neighbor_found_count; i++)
+        if (neighbor_found[i] == addr)
+            break;
+    if (i == neighbor_found_count)
+        return false;
+    else
+        return true;
+}
+
 static struct unicast_conn uc;
 static void
 uc_recv(struct unicast_conn *c, const rimeaddr_t *from) {
@@ -72,8 +85,12 @@ uc_recv(struct unicast_conn *c, const rimeaddr_t *from) {
         struct report_t *report = (struct report_t *)packetbuf_dataptr();
         printf("[UC] having found %d.%d at tx:%d rssi:%d lqi:%d\n",
                 from->u8[0], from->u8[1], report->txpower, report->rssi, report->lqi);
+
         uint16_t addr = from->u8[0] + ((uint16_t)from->u8[1] << 8) - 1; // Minus 1 because of indexing
         memcpy(&(neighbor[addr].report), report, sizeof(struct report_t)); // Recognize friend
+
+        if (!have_found_node(addr))
+            neighbor_found[neighbor_found_count++] = addr; // Recognize nodes found
 
     } else {
         //printf("[UC] receiving from %d.%d: %s\n", from->u8[0], from->u8[1], (char *)packetbuf_dataptr());
@@ -98,10 +115,10 @@ bc_recv(struct broadcast_conn *c, const rimeaddr_t *from)
     if (type == ANNOUNCEMENT) {
         struct announcement_t *announcment = (struct announcement_t *)packetbuf_dataptr();
         struct report_t report = {
-              .type = RSSI_REPORT,
-              .txpower = announcment->txpower,
-              .rssi = packetbuf_attr(PACKETBUF_ATTR_RSSI),
-              .lqi = packetbuf_attr(PACKETBUF_ATTR_LINK_QUALITY),
+              .type     = RSSI_REPORT,
+              .txpower  = announcment->txpower,
+              .rssi     = packetbuf_attr(PACKETBUF_ATTR_RSSI),
+              .lqi      = packetbuf_attr(PACKETBUF_ATTR_LINK_QUALITY),
         };                        ;
         printf("[BC] receiving from %d.%d: pow:%d rssi:%d lqi:%d\n",
                 from->u8[0], from->u8[1], announcment->txpower, report.rssi, report.lqi);
@@ -143,7 +160,7 @@ PROCESS_THREAD(main_process, ev, data) {
 
         //printf("[BC] sending with tx:%d\n", pow);
         struct announcement_t announcement;
-        announcement.type = ANNOUNCEMENT;
+        announcement.type    = ANNOUNCEMENT;
         announcement.txpower = txpower;
 
         cc2420_set_txpower(txpower);
@@ -159,31 +176,38 @@ PROCESS_THREAD(main_process, ev, data) {
      * 1) If this node is the first, then sending data to the last one.
      * 2) If it's the other, then relaying the data by flooding.
      */
+    random_init(random_rand() * rimeaddr_node_addr.u8[0]);
+
     while (1) {
         etimer_set(&et, (TX_PERIOD * CLOCK_SECOND) + (random_rand() % CLOCK_SECOND)); // Delay the sending
         PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
-        uint8_t random_id;
-        random_id = (random_rand()>>1) % NODE_COUNT;
-        rimeaddr_t dest;
-        dest.u8[0] = random_id+1;
-        dest.u8[1] = 0;
+        if (neighbor_found_count > 0) {
+            static uint8_t slot = 0;
+            uint8_t addr;
+            addr = neighbor_found[slot];
+            rimeaddr_t dest;
+            dest.u8[0] = addr + 1;
+            dest.u8[1] = 0;
 
-        if (!rimeaddr_cmp(&rimeaddr_node_addr, &dest)) {
-//            printf("%d Send to %d with tx: %d\n",
-//                    rimeaddr_node_addr.u8[0], random_id+1, neighbor[random_id].report.txpower);
+            slot = (random_rand() ^ 0x55) % neighbor_found_count;
+//            if (++slot >= neighbor_found_count) slot = 0;
 
-            if (LS_TPC) {
-                cc2420_set_txpower(neighbor[random_id].report.txpower);
-                clock_delay(SET_TXPOWER_DELAY); // Delay the CPU for a multiple of 2.83 us. after the change
+            if (!rimeaddr_cmp(&rimeaddr_node_addr, &dest)) {
+                //printf("%d send to %d tx:%d\n", rimeaddr_node_addr.u8[0], addr+1, neighbor[addr].report.txpower);
+
+                if (LS_TPC) {
+                    cc2420_set_txpower(neighbor[addr].report.txpower);
+                    clock_delay(SET_TXPOWER_DELAY); // Delay the CPU for a multiple of 2.83 us. after the change
+                }
+
+                packetbuf_copyfrom(message, sizeof(message));
+
+                if (UNICAST_SEND)
+                    unicast_send(&uc, &dest);
+                else
+                    broadcast_send(&bc);
             }
-
-            packetbuf_copyfrom(message, sizeof(message));
-
-            if (UNICAST_SEND)
-                unicast_send(&uc, &dest);
-            else
-                broadcast_send(&bc);
         }
     }
     PROCESS_END();
