@@ -199,6 +199,9 @@ PROCESS_THREAD(main_process, ev, data) {
                 if (LS_TPC) {
                     cc2420_set_txpower(neighbor[addr].report.txpower);
                     clock_delay(SET_TXPOWER_DELAY); // Delay the CPU for a multiple of 2.83 us. after the change
+                } else {
+                    cc2420_set_txpower(CC2420_TXPOWER_MAX);
+                    clock_delay(SET_TXPOWER_DELAY); // Delay the CPU for a multiple of 2.83 us. after the change
                 }
 
                 packetbuf_copyfrom(message, sizeof(message));
