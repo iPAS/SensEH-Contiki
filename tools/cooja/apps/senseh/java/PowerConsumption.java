@@ -451,16 +451,17 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
   }
 
   // --------------------------------------------------------------------------
-  public long getCPUTimeInActive() {
-    return cpuModeTimes[MSP430Constants.MODE_ACTIVE];
+  public long getCPUTimeActive(long [] times) {
+    return times[MSP430Constants.MODE_ACTIVE];
   }
 
-  public long getCPUTimeInLPM() {
-    return cpuModeTimes[MSP430Constants.MODE_LPM0]
-        + cpuModeTimes[MSP430Constants.MODE_LPM1]
-        + cpuModeTimes[MSP430Constants.MODE_LPM2]
-        + cpuModeTimes[MSP430Constants.MODE_LPM3]
-        + cpuModeTimes[MSP430Constants.MODE_LPM4];
+  public long getCPUTimeTotal(long [] times) {
+    return times[MSP430Constants.MODE_ACTIVE]
+        + times[MSP430Constants.MODE_LPM0]
+        + times[MSP430Constants.MODE_LPM1]
+        + times[MSP430Constants.MODE_LPM2]
+        + times[MSP430Constants.MODE_LPM3]
+        + times[MSP430Constants.MODE_LPM4];
   }
 
   public double getTotalConsumedEnergy() {
@@ -473,7 +474,7 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
     updateCPUStats();
     updateRadioStats();
     return
-        calculateCPUEnergy(cpuModeTimes) / (getCPUTimeInActive() + getCPUTimeInLPM()) +
+        calculateCPUEnergy(cpuModeTimes) / getCPUTimeTotal(cpuModeTimes) +
         calculateRadioEnergy(radioTimes) / radioTimes.duration;
   }
 
@@ -482,20 +483,24 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
     return (den > 0)? (double)(100 * num) / den  :  0;
   }
 
+  public double percentageTimeCPUActive(long [] times) {
+    return (double)(100 * getCPUTimeActive(times)) / getCPUTimeTotal(times);
+  }
+
   public double percentageTimeRadioTx(RadioTimes rt) {
     return percentage(rt.tx, rt.duration);
   }
 
-  public double percentageTimeRadioStandby(RadioTimes rt) {
-    return percentage(rt.on - rt.tx, rt.duration);
+  public double percentageTimeRadioRx(RadioTimes rt) {
+    return percentage(rt.rx, rt.duration);
   }
 
-  public double percentageTimeCPUActive() {
-    return (double)(100 * getCPUTimeInActive()) / (getCPUTimeInActive() + getCPUTimeInLPM());
+  public double percentageTimeRadioInterfered(RadioTimes rt) {
+    return percentage(rt.interfered, rt.duration);
   }
 
-  public double percentageTimeCPUInLPM() {
-    return (double)(100 * getCPUTimeInLPM()) / (getCPUTimeInActive() + getCPUTimeInLPM());
+  public double percentageTimeRadioIdle(RadioTimes rt) {
+    return percentage(rt.idle, rt.duration);
   }
 
   // --------------------------------------------------------------------------
@@ -559,16 +564,25 @@ public class PowerConsumption implements OperatingModeListener, Observer, MSP430
   public String getSnappedStatistics() {
     StringBuilder sb = new StringBuilder();
     double energyCPU = calculateCPUEnergy(cpuModeTimesTotalSnapshot) / 1e6;
-    double energyRadioTx = calculateRadioEnergyTx(radioTimesTotalSnapshot) / 1e6;
-    double energyRadioRx = calculateRadioEnergyRx(radioTimesTotalSnapshot) / 1e6;
+    double energyRadioTx   = calculateRadioEnergyTx(radioTimesTotalSnapshot) / 1e6;
+    double energyRadioRx   = calculateRadioEnergyRx(radioTimesTotalSnapshot) / 1e6;
     double energyRadioIdle = calculateRadioEnergyIdle(radioTimesTotalSnapshot) / 1e6;
     double energyRadioInterfered = calculateRadioEnergyInterfered(radioTimesTotalSnapshot) / 1e6;
 
     sb.append("cpu:mJ="  + energyCPU + ", ");
+    sb.append("cpu:%="   + percentageTimeCPUActive(cpuModeTimesTotalSnapshot) + ", ");
+
     sb.append("rx:mJ="   + energyRadioRx + ", ");
+    sb.append("rx:%="    + percentageTimeRadioRx(radioTimesTotalSnapshot) + ", ");
+
     sb.append("int:mJ="  + energyRadioInterfered + ", ");
+    sb.append("int:%="   + percentageTimeRadioInterfered(radioTimesTotalSnapshot) + ", ");
+
     sb.append("idle:mJ=" + energyRadioIdle + ", ");
-    sb.append("tx:mJ="   + energyRadioTx);
+    sb.append("idle:%="  + percentageTimeRadioIdle(radioTimesTotalSnapshot) + ", ");
+
+    sb.append("tx:mJ="   + energyRadioTx + ", ");
+    sb.append("tx:%="    + percentageTimeRadioTx(radioTimesTotalSnapshot) ); //+ ", ");
 
     for (int i = 0; i < radioTimesTotalSnapshot.multiTx.length; i++) {
       sb.append(String.format(", tx%d:%%=%2.2f", i,
