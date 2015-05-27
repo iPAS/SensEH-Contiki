@@ -2,7 +2,7 @@
 #define NODE_COUNT   10
 
 #define UNICAST_SEND 1
-#define TX_PERIOD    5
+#define TX_PERIOD    9 // Random inter-packet-generated time between 1..10 seconds
 
 #define DEBUG 0
 
@@ -22,6 +22,7 @@
 #define UNICAST_CHANNEL   199
 #define BROADCAST_CHANNEL 200
 #define USER_DATA_LENGTH  16
+#define TX_POWER_BROADCAST_PERIOD 9
 #define SET_TXPOWER_DELAY 100
 
 typedef enum {false=0, true} bool;
@@ -89,8 +90,11 @@ uc_recv(struct unicast_conn *c, const rimeaddr_t *from) {
         uint16_t addr = from->u8[0] + ((uint16_t)from->u8[1] << 8) - 1; // Minus 1 because of indexing
         memcpy(&(neighbor[addr].report), report, sizeof(struct report_t)); // Recognize friend
 
-        if (!have_found_node(addr))
+        if (!have_found_node(addr)) {
             neighbor_found[neighbor_found_count++] = addr; // Recognize nodes found
+            printf("[UC] current degree of %d.%d is %d\n",
+                    rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1], neighbor_found_count);
+        }
 
     } else {
         //printf("[UC] receiving from %d.%d: %s\n", from->u8[0], from->u8[1], (char *)packetbuf_dataptr());
@@ -155,7 +159,7 @@ PROCESS_THREAD(main_process, ev, data) {
      */
     static txpower_t txpower;
     for (txpower = 31; txpower > 0; txpower--) {
-        etimer_set(&et, (TX_PERIOD * CLOCK_SECOND) + (random_rand() % CLOCK_SECOND));
+        etimer_set(&et, (TX_POWER_BROADCAST_PERIOD * CLOCK_SECOND) + (random_rand() % CLOCK_SECOND));
         PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
         //printf("[BC] sending with tx:%d\n", pow);
@@ -179,7 +183,7 @@ PROCESS_THREAD(main_process, ev, data) {
     random_init(random_rand() * rimeaddr_node_addr.u8[0]);
 
     while (1) {
-        etimer_set(&et, (TX_PERIOD * CLOCK_SECOND) + (random_rand() % CLOCK_SECOND)); // Delay the sending
+        etimer_set(&et, CLOCK_SECOND + (random_rand() % (TX_PERIOD * CLOCK_SECOND))); // Delay the sending
         PROCESS_WAIT_EVENT_UNTIL(etimer_expired(&et));
 
         if (neighbor_found_count > 0) {

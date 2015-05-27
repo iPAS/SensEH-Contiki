@@ -47,9 +47,13 @@ if [ $# -lt ${REQUIRED_PARAMS} ]; then
 	exit 255
 fi
 
-#[[ ! -f "$1" ]] && echo " -> '$1' COOJA project do not exist!" && exit 255
-CSC=$1
-shift ${REQUIRED_PARAMS}
+if [ "$1" == "--mkconf" ]; then
+	echo
+else
+	[[ ! -f "$1" ]] && echo " -> '$1' COOJA project do not exist!" && exit 255
+	CSC=$1
+	shift ${REQUIRED_PARAMS}
+fi
 
 ###########
 ## Paths ##

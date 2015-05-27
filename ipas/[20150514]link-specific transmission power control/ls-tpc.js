@@ -11,7 +11,7 @@
  */
 
 // Test for 5 mins after tx-matching process
-TIMEOUT(541000, showStats()); // DEFAULT=20min; thus, setting new
+TIMEOUT(661000, showStats()); // DEFAULT=20min; thus, setting new
 
 /*
  * Initialize variables
@@ -27,7 +27,7 @@ showStats = function() {
   log.testOK();
 };
 
-GENERATE_MSG(240000, "wait"); // Wait for tx-matching process finishing after 4 minutes 
+GENERATE_MSG(360000, "wait"); // Wait for tx-matching process finishing after 6 minutes 
 YIELD_THEN_WAIT_UNTIL(msg.equals("wait")); // The node will be back to work again   
 
 plugin.restartConsumedEnergyStatistics();
