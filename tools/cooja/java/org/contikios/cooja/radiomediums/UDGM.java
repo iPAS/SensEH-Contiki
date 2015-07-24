@@ -86,7 +86,12 @@ public class UDGM extends AbstractRadioMedium {
   public double SUCCESS_RATIO_RX = 1.0; /* Success ratio of RX. If this fails, the single affected receiver does not receive the packet */
   public double TRANSMITTING_RANGE = 50; /* Transmission range. */
   public double INTERFERENCE_RANGE = 100; /* Interference range. Ignored if below transmission range. */
-
+  
+  public long intf_count = 0; // iPAS: count all interference
+  public long intf_off = 0;   // iPAS: count an interference due to a transceiver is off
+  public long intf_col = 0;   // iPAS: count an interference due to collision
+  public long intf_area = 0;  // iPAS: count an interference due to be within a radiation area
+  
   private DirectedGraphMedium dgrm; /* Used only for efficient destination lookup */
 
   private Random random = null;
@@ -185,16 +190,15 @@ public class UDGM extends AbstractRadioMedium {
 
     /* Loop through all potential destinations */
     Position senderPos = sender.getPosition();
-    for (DestinationRadio dest: potentialDestinations) {
+    for (DestinationRadio dest: potentialDestinations) { // iPAS: How SENDER affect to RECVs
       Radio recv = dest.radio;
 
-      /* Fail if radios are on different (but configured) channels */ 
-      if (sender.getChannel() >= 0 &&
-          recv.getChannel() >= 0 &&
-          sender.getChannel() != recv.getChannel()) {
-        continue;
-      }
-      Position recvPos = recv.getPosition();
+      	/* Fail if radios are on different (but configured) channels */ 
+        if (sender.getChannel() >= 0 && recv.getChannel() >= 0 &&
+            sender.getChannel() != recv.getChannel()) {
+            continue;
+        }
+        Position recvPos = recv.getPosition();
 
       /* Fail if radio is turned off */
 //      if (!recv.isReceiverOn()) {
@@ -210,40 +214,45 @@ public class UDGM extends AbstractRadioMedium {
 //        }
 //      }
 
-      double distance = senderPos.getDistanceTo(recvPos);
-      if (distance <= moteTransmissionRange) {
-        /* Within transmission range */
-
-        if (!recv.isRadioOn()) {
-          newConnection.addInterfered(recv);
-          recv.interfereAnyReception();
-        } else if (recv.isInterfered()) {
-          /* Was interfered: keep interfering */
-          newConnection.addInterfered(recv);
-        } else if (recv.isTransmitting()) {
-          newConnection.addInterfered(recv);
-        } else if (recv.isReceiving() ||
-            (random.nextDouble() > getRxSuccessProbability(sender, recv))) {
-          /* Was receiving, or reception failed: start interfering */
-          newConnection.addInterfered(recv);
-          recv.interfereAnyReception();
-
-          /* Interfere receiver in all other active radio connections */
-          for (RadioConnection conn : getActiveConnections()) {
-            if (conn.isDestination(recv)) {
-              conn.addInterfered(recv);
-            }
-          }
-
-        } else {
-          /* Success: radio starts receiving */
-          newConnection.addDestination(recv);
+	    double distance = senderPos.getDistanceTo(recvPos);
+	    if (distance <= moteTransmissionRange) { 
+	    	
+	    	/* Within transmission range */
+	        if (!recv.isRadioOn()) {
+	      	  	newConnection.addInterfered(recv);
+	            recv.interfereAnyReception();
+	            intf_count++; intf_off++;
+//	            logger.debug("Interfered due to radio off (" + intf_off + "/" + intf_count + ")"); // iPAS          
+	        } else if (recv.isInterfered()) {
+	            /* Was interfered: keep interfering */
+	            newConnection.addInterfered(recv);
+	        } else if (recv.isTransmitting()) {
+	            newConnection.addInterfered(recv);
+	        } else if (recv.isReceiving() || (random.nextDouble() > getRxSuccessProbability(sender, recv))) {
+	            /* Was receiving, or reception failed: start interfering */
+	            newConnection.addInterfered(recv);
+	            recv.interfereAnyReception();
+	            intf_count++; intf_col++;
+//	            logger.debug("Interfered due to collision or noise (" + intf_col + "/" + intf_count + ")"); // iPAS          
+	            
+	            /* Interfere receiver in all other active radio connections */
+	            for (RadioConnection conn : getActiveConnections()) {
+	            	if (conn.isDestination(recv)) {
+	                    conn.addInterfered(recv);
+	                }
+	            }	          
+	        } else 
+	            /* Success: radio starts receiving */
+	            newConnection.addDestination(recv);
+	        
+            
+        } else if (distance <= moteInterferenceRange) {
+            /* Within interference range */
+            newConnection.addInterfered(recv);
+            recv.interfereAnyReception();
+            intf_count++; intf_area++;
+//            logger.debug("Interfered within intference area (" + intf_area + "/" + intf_count + ")"); // iPAS
         }
-      } else if (distance <= moteInterferenceRange) {
-        /* Within interference range */
-        newConnection.addInterfered(recv);
-        recv.interfereAnyReception();
-      }
     }
 
     return newConnection;
@@ -274,70 +283,72 @@ public class UDGM extends AbstractRadioMedium {
   public void updateSignalStrengths() {
     /* Override: uses distance as signal strength factor */
     
-    /* Reset signal strengths */
-    for (Radio radio : getRegisteredRadios()) {
-      radio.setCurrentSignalStrength(getBaseRssi(radio));
-    }
+		/* Reset signal strengths */
+		for (Radio radio : getRegisteredRadios()) {
+		  radio.setCurrentSignalStrength(getBaseRssi(radio));
+		}
 
-    /* Set signal strength to below strong on destinations */
-    RadioConnection[] conns = getActiveConnections();
-    for (RadioConnection conn : conns) {
-      if (conn.getSource().getCurrentSignalStrength() < SS_STRONG) {
-        conn.getSource().setCurrentSignalStrength(SS_STRONG);
-      }
-      for (Radio dstRadio : conn.getDestinations()) {
-        if (conn.getSource().getChannel() >= 0 &&
-            dstRadio.getChannel() >= 0 &&
-            conn.getSource().getChannel() != dstRadio.getChannel()) {
-          continue;
+		/* Set signal strength to below strong on destinations */
+		RadioConnection[] conns = getActiveConnections();
+		for (RadioConnection conn : conns) {
+		  if (conn.getSource().getCurrentSignalStrength() < SS_STRONG) {
+		    conn.getSource().setCurrentSignalStrength(SS_STRONG);
+		  }
+		  
+		  for (Radio dstRadio : conn.getDestinations()) {
+		    if (conn.getSource().getChannel() >= 0 &&
+		        dstRadio.getChannel() >= 0 &&
+		        conn.getSource().getChannel() != dstRadio.getChannel()) {
+		      continue;
+		    }
+		
+		    double dist = conn.getSource().getPosition().getDistanceTo(dstRadio.getPosition());
+		
+		    double maxTxDist = TRANSMITTING_RANGE
+		    * ((double) conn.getSource().getCurrentOutputPowerIndicator() / (double) conn.getSource().getOutputPowerIndicatorMax());
+		    double distFactor = dist/maxTxDist;
+		
+		    double signalStrength = SS_STRONG + distFactor*(SS_WEAK - SS_STRONG);
+		    if (dstRadio.getCurrentSignalStrength() < signalStrength) {
+		      dstRadio.setCurrentSignalStrength(signalStrength);
+		    }
+		  }
+		}
+
+    	/* Set signal strength to below weak on interfered */
+    	for (RadioConnection conn : conns) {
+            for (Radio intfRadio : conn.getInterfered()) {
+                if (conn.getSource().getChannel() >= 0 &&
+                    intfRadio.getChannel() >= 0 &&
+                    conn.getSource().getChannel() != intfRadio.getChannel()) {
+                    continue;
+                }
+                
+                double dist = conn.getSource().getPosition().getDistanceTo(intfRadio.getPosition());
+                
+                double maxTxDist = TRANSMITTING_RANGE * 
+                		((double) conn.getSource().getCurrentOutputPowerIndicator() / 
+                		 (double) conn.getSource().getOutputPowerIndicatorMax());
+                double distFactor = dist/maxTxDist;
+                
+                if (distFactor < 1) { /* iPAS: dist from S to R is less than tx range, good! */
+                    double signalStrength = SS_STRONG + distFactor*(SS_WEAK - SS_STRONG);
+                    if (intfRadio.getCurrentSignalStrength() < signalStrength) {
+                        intfRadio.setCurrentSignalStrength(signalStrength);
+                    }
+                } else {
+                    intfRadio.setCurrentSignalStrength(SS_WEAK);
+                    if (intfRadio.getCurrentSignalStrength() < SS_WEAK) {
+                        intfRadio.setCurrentSignalStrength(SS_WEAK);
+                    }
+                }
+                
+                if (!intfRadio.isInterfered()) {
+//                    logger.warn("Radio was not interfered: " + intfRadio); // iPAS: uncommented
+                    intfRadio.interfereAnyReception();
+                }
+            }
         }
-
-        double dist = conn.getSource().getPosition().getDistanceTo(dstRadio.getPosition());
-
-        double maxTxDist = TRANSMITTING_RANGE
-        * ((double) conn.getSource().getCurrentOutputPowerIndicator() / (double) conn.getSource().getOutputPowerIndicatorMax());
-        double distFactor = dist/maxTxDist;
-
-        double signalStrength = SS_STRONG + distFactor*(SS_WEAK - SS_STRONG);
-        if (dstRadio.getCurrentSignalStrength() < signalStrength) {
-          dstRadio.setCurrentSignalStrength(signalStrength);
-        }
-      }
-    }
-
-    /* Set signal strength to below weak on interfered */
-    for (RadioConnection conn : conns) {
-      for (Radio intfRadio : conn.getInterfered()) {
-        if (conn.getSource().getChannel() >= 0 &&
-            intfRadio.getChannel() >= 0 &&
-            conn.getSource().getChannel() != intfRadio.getChannel()) {
-          continue;
-        }
-
-        double dist = conn.getSource().getPosition().getDistanceTo(intfRadio.getPosition());
-
-        double maxTxDist = TRANSMITTING_RANGE
-        * ((double) conn.getSource().getCurrentOutputPowerIndicator() / (double) conn.getSource().getOutputPowerIndicatorMax());
-        double distFactor = dist/maxTxDist;
-
-        if (distFactor < 1) {
-          double signalStrength = SS_STRONG + distFactor*(SS_WEAK - SS_STRONG);
-          if (intfRadio.getCurrentSignalStrength() < signalStrength) {
-            intfRadio.setCurrentSignalStrength(signalStrength);
-          }
-        } else {
-          intfRadio.setCurrentSignalStrength(SS_WEAK);
-          if (intfRadio.getCurrentSignalStrength() < SS_WEAK) {
-            intfRadio.setCurrentSignalStrength(SS_WEAK);
-          }
-        }
-
-        if (!intfRadio.isInterfered()) {
-          /*logger.warn("Radio was not interfered: " + intfRadio);*/
-          intfRadio.interfereAnyReception();
-        }
-      }
-    }
   }
 
   public Collection<Element> getConfigXML() {

@@ -344,11 +344,11 @@ public class PowerTracker extends VisPlugin {
 
       /* Radio on/off */
       if (radioWasOn) {
-        accumulateRadioOn(now - lastUpdateTime);
+        accumulateRadioOn(now - lastUpdateTime); // iPAS: whole time = radio.on + radio.off
       }
 
       /* Radio tx/rx */
-      if (lastRadioState == RadioState.TRANSMITTING) {
+      if (lastRadioState == RadioState.TRANSMITTING) { // iPAS: radio.on = .tx + .rx + .int + .idle
         accumulateRadioTx(now - lastUpdateTime);
       } else if (lastRadioState == RadioState.RECEIVING) {
         accumulateRadioRx(now - lastUpdateTime);
