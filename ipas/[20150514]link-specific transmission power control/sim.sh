@@ -10,6 +10,7 @@ DATE=$(date +'%Y%m%d')
 TIME=$(date +'%H%M')
 
 REQUIRED_PARAMS=1
+SEEDS=(612345 561234 456123 345612 234561 123456)
 
 echo '########## Simulation Script for Contiki & COOJA ##########'
 echo 'Author: iPAS'
@@ -35,6 +36,7 @@ if [ $# -lt ${REQUIRED_PARAMS} ]; then
 	echo 'or, in case of graphical simulation, so that open COOJA then.'
 	echo
 	echo ' > '${EXAMPLE}' --mkconf'
+	echo ' > ./sim.sh --mkconf'
 	echo 
 	echo 'or, with full options'
 	echo
@@ -48,7 +50,7 @@ if [ $# -lt ${REQUIRED_PARAMS} ]; then
 fi
 
 if [ "$1" == "--mkconf" ]; then
-	echo
+	CSC=''
 else
 	[[ ! -f "$1" ]] && echo " -> '$1' COOJA project do not exist!" && exit 255
 	CSC=$1
@@ -144,21 +146,21 @@ done
 ###############################
 ## Create configuration file ##
 
-CSC_SIM=${CSC}
+CSC_SIM='tempolary.csc'
 
 #H_TEMPFILE=$(tempfile -p ${TIME}_ -s _${FW_NAME}.h) || ( echo 'h tempfile creation error!' && exit 255 )
 #CONF_SIM=${H_TEMPFILE}
 CONF_SIM=project-conf.h
 cat project-conf.h.template | \
-sed "s/%SIM_RDC%/${RDC}/g" | \
-sed "s/%SIM_RDC_RATE%/${RDC_RATE}/g" | \
-sed "s/%LS_TPC%/${LS_TPC}/g" | \
-sed "s/%SIM_MAC%/${MAC}/g" > "${CONF_SIM}"
+	sed "s/%SIM_RDC%/${RDC}/g" | \
+	sed "s/%SIM_RDC_RATE%/${RDC_RATE}/g" | \
+	sed "s/%LS_TPC%/${LS_TPC}/g" | \
+	sed "s/%SIM_MAC%/${MAC}/g" > "${CONF_SIM}"
 
 if [ ${NOSIM} ]; then
 	exit
 else
-	trap "rm -f \"${CONF_SIM}\"" EXIT
+	trap "rm -f \"${CSC_SIM}\" \"${CONF_SIM}\"" EXIT
 fi
 
 #####################
@@ -173,6 +175,10 @@ echo "Simulation: ${NAME}" | tee -a ${LOG}
 echo | tee -a ${LOG}
 
 while [ $COUNT -gt 0 ]; do 
+	
+	SEED=${SEEDS[ ${COUNT} ]}
+	cat ${CSC} | sed "s/generated/${SEED}/" > ${CSC_SIM}
+
 	COUNT=$((COUNT - 1))
 	echo -e " -> $(echo ${NAME} | sed 's/,/\\n    /g')" | tee -a 
 	echo " -> Run: #${LOOP}, remain ${COUNT}" | tee -a ${LOG}
