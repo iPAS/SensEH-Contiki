@@ -115,7 +115,7 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
   private NumberFormat integerFormat;
 
   private Mote mote;
-  
+
   /**
    * @param moteToView Mote
    * @param simulation Simulation
@@ -124,7 +124,7 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
   public VariableWatcher(Mote moteToView, Simulation simulation, GUI gui) {
     super("Variable Watcher (" + moteToView + ")", gui);
     this.mote = moteToView;
-    moteMemory = (AddressMemory) moteToView.getMemory(); // iPAS: mote memory accessing
+    moteMemory = moteToView.getMemory(); // iPAS: mote memory accessing
 
     JLabel label;
     integerFormat = NumberFormat.getIntegerInstance();
@@ -143,19 +143,22 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
     varName.setEditable(true);
     varName.setSelectedItem("[enter or pick name]");
 
-    String[] allPotentialVarNames = moteMemory.getVariableNames();
+    String[] allPotentialVarNames = moteMemory.getVariableNames(); // iPAS: mote memory accessing
     Arrays.sort(allPotentialVarNames);
     for (String aVarName: allPotentialVarNames) {
       varName.addItem(aVarName);
     }
 
     varName.addKeyListener(new KeyListener() {
+      @Override
       public void keyPressed(KeyEvent e) {
         writeButton.setEnabled(false);
       }
+      @Override
       public void keyTyped(KeyEvent e) {
         writeButton.setEnabled(false);
       }
+      @Override
       public void keyReleased(KeyEvent e) {
         writeButton.setEnabled(false);
       }
@@ -177,8 +180,9 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
     varType.addItem("Char array (x bytes)"); // CHAR_ARRAY_INDEX = 3
 
     varType.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
-        int selectedIndex = varType.getSelectedIndex();  
+        int selectedIndex = varType.getSelectedIndex();
         if (selectedIndex == ARRAY_INDEX || selectedIndex == CHAR_ARRAY_INDEX) {
           lengthPane.setVisible(true);
           setNumberOfValues(((Number) varLength.getValue()).intValue());
@@ -187,7 +191,7 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
             setNumberOfCharValues(((Number) varLength.getValue()).intValue());
           } else {
             charValuePane.setVisible(false);
-            setNumberOfCharValues(1);  
+            setNumberOfCharValues(1);
           }
         } else {
           lengthPane.setVisible(false);
@@ -204,11 +208,13 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
 
     /* The recommended fix for the bug #4740914
      * Synopsis : Doing selectAll() in a JFormattedTextField on focusGained
-     * event doesn't work. 
+     * event doesn't work.
      */
     jFormattedTextFocusAdapter = new FocusAdapter() {
+      @Override
       public void focusGained(final FocusEvent ev) {
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             JTextField jtxt = (JTextField)ev.getSource();
             jtxt.selectAll();
@@ -227,10 +233,11 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
     varLength.setValue(new Integer(1));
     varLength.setColumns(4);
     varLength.addPropertyChangeListener("value", new PropertyChangeListener() {
+      @Override
       public void propertyChange(PropertyChangeEvent e) {
         setNumberOfValues(((Number) varLength.getValue()).intValue());
         if(varType.getSelectedIndex() == CHAR_ARRAY_INDEX) {
-          setNumberOfCharValues(((Number) varLength.getValue()).intValue());    
+          setNumberOfCharValues(((Number) varLength.getValue()).intValue());
         }
       }
     });
@@ -281,7 +288,7 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
           char ch = jtxt.getText().trim().charAt(0);
           varValues[index].setValue(new Integer(ch));
         } else {
-          varValues[index].setValue(new Integer(0));  
+          varValues[index].setValue(new Integer(0));
         }
       }
 
@@ -309,10 +316,10 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
         } else {
           varValues[index].setValue(new Integer(0));
         }
-      }           
+      }
     };
 
-    /* Key Listener for value changes. */  
+    /* Key Listener for value changes. */
     varValueKeyListener = new KeyListener() {
       @Override
       public void keyPressed(KeyEvent arg0) {
@@ -339,8 +346,8 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
           charValues[index].setText(Character.toString(ch));
         } catch(Exception e) {
           charValues[index].setText(Character.toString((char)0));
-        }               
-      }  
+        }
+      }
 
       @Override
       public void keyTyped(KeyEvent arg0) {
@@ -372,7 +379,7 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
 
 
     for (JTextField charValue: charValues) {
-      charValuePane.add(charValue);     
+      charValuePane.add(charValue);
     }
 
     mainPane.add(valuePane);
@@ -389,10 +396,11 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
     smallPane = new JPanel(new BorderLayout());
     JButton button = new JButton("Read");
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (varType.getSelectedIndex() == BYTE_INDEX) {
           try {
-            byte val = moteMemory.getByteValueOf((String) varName.getSelectedItem());
+            byte val = moteMemory.getByteValueOf((String) varName.getSelectedItem()); // iPAS: mote memory accessing
             varValues[0].setValue(new Integer(0xFF & val));
             varName.setBackground(Color.WHITE);
             writeButton.setEnabled(true);
@@ -410,7 +418,7 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
             varName.setBackground(Color.RED);
             writeButton.setEnabled(false);
           }
-        } else if (varType.getSelectedIndex() == ARRAY_INDEX || 
+        } else if (varType.getSelectedIndex() == ARRAY_INDEX ||
             varType.getSelectedIndex() == CHAR_ARRAY_INDEX) {
           try {
             int length = ((Number) varLength.getValue()).intValue();
@@ -420,10 +428,10 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
             }
             if(varType.getSelectedIndex() == CHAR_ARRAY_INDEX) {
               for (int i=0; i < length; i++) {
-                char ch = (char)(0xFF & vals[i]);  
-                charValues[i].setText(Character.toString(ch));  
+                char ch = (char)(0xFF & vals[i]);
+                charValues[i].setText(Character.toString(ch));
                 varValues[i].addKeyListener(varValueKeyListener);
-              } 
+              }
             }
             varName.setBackground(Color.WHITE);
             writeButton.setEnabled(true);
@@ -438,6 +446,7 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
 
     button = new JButton("Write");
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (varType.getSelectedIndex() == BYTE_INDEX) {
           try {
@@ -455,7 +464,7 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
           } catch (UnknownVariableException ex) {
             varName.setBackground(Color.RED);
           }
-        } else if (varType.getSelectedIndex() == ARRAY_INDEX || 
+        } else if (varType.getSelectedIndex() == ARRAY_INDEX ||
             varType.getSelectedIndex() == CHAR_ARRAY_INDEX) {
           try {
             int length = ((Number) varLength.getValue()).intValue();
@@ -518,9 +527,11 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
     pack();
   }
 
+  @Override
   public void closePlugin() {
   }
 
+  @Override
   public Collection<Element> getConfigXML() {
     // Return currently watched variable and type
     Vector<Element> config = new Vector<Element>();
@@ -560,6 +571,7 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
     return config;
   }
 
+  @Override
   public boolean setConfigXML(Collection<Element> configXML, boolean visAvailable) {
     lengthPane.setVisible(false);
     setNumberOfValues(1);
@@ -590,6 +602,7 @@ public class VariableWatcher extends VisPlugin implements MotePlugin {
     return true;
   }
 
+  @Override
   public Mote getMote() {
     return mote;
   }
@@ -614,6 +627,7 @@ class JTextFieldLimit extends PlainDocument {
     toUppercase = upper;
   }
 
+  @Override
   public void insertString(int offset, String  str, AttributeSet attr)
   throws BadLocationException {
     if (str == null) {

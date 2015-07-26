@@ -227,12 +227,15 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 
     viewMenu = new JMenu("View");
     viewMenu.addMenuListener(new MenuListener() {
+      @Override
       public void menuSelected(MenuEvent e) {
         viewMenu.removeAll();
         populateSkinMenu(viewMenu);
       }
+      @Override
       public void menuDeselected(MenuEvent e) {
       }
+      @Override
       public void menuCanceled(MenuEvent e) {
       }
     });
@@ -244,6 +247,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     this.setJMenuBar(menuBar);
 
     Action zoomInAction = new AbstractAction("Zoom in") {
+      @Override
       public void actionPerformed(ActionEvent e) {
         zoomToFactor(zoomFactor() * 1.2);
       }
@@ -256,6 +260,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     zoomMenu.add(zoomInItem);
 
     Action zoomOutAction = new AbstractAction("Zoom out") {
+      @Override
       public void actionPerformed(ActionEvent e) {
         zoomToFactor(zoomFactor() / 1.2);
       }
@@ -269,6 +274,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 
     JMenuItem resetViewportItem = new JMenuItem("Reset viewport");
     resetViewportItem.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         resetViewport = 1;
         repaint();
@@ -279,6 +285,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     /* Main canvas */
     canvas = new JPanel() {
       private static final long serialVersionUID = 1L;
+      @Override
       public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
@@ -304,16 +311,19 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 
     /* Observe simulation and mote positions */
     posObserver = new Observer() {
+      @Override
       public void update(Observable obs, Object obj) {
         repaint();
       }
     };
     simulation.getEventCentral().addMoteCountListener(newMotesListener = new MoteCountListener() {
+      @Override
       public void moteWasAdded(Mote mote) {
         Position pos = mote.getInterfaces().getPosition();
         if (pos != null) {
           pos.addObserver(posObserver);
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               resetViewport = 1;
               repaint();
@@ -321,6 +331,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
           });
         }
       }
+      @Override
       public void moteWasRemoved(Mote mote) {
         Position pos = mote.getInterfaces().getPosition();
         if (pos != null) {
@@ -338,6 +349,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 
     /* Observe mote highlights */
     gui.addMoteHighlightObserver(moteHighligtObserver = new Observer() {
+      @Override
       public void update(Observable obs, Object obj) {
         if (!(obj instanceof Mote)) {
           return;
@@ -346,6 +358,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
         final Timer timer = new Timer(100, null);
         final Mote mote = (Mote) obj;
         timer.addActionListener(new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent e) {
             /* Count down */
             if (timer.getDelay() < 90) {
@@ -371,6 +384,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 
     /* Observe mote relations */
     gui.addMoteRelationsObserver(moteRelationsObserver = new Observer() {
+      @Override
       public void update(Observable obs, Object obj) {
         repaint();
       }
@@ -378,14 +392,17 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 
     /* Popup menu */
     canvas.addMouseMotionListener(new MouseMotionListener() {
+      @Override
       public void mouseMoved(MouseEvent e) {
         handleMouseMove(e, false);
       }
+      @Override
       public void mouseDragged(MouseEvent e) {
         handleMouseMove(e, false);
       }
     });
     canvas.addMouseListener(new MouseAdapter() {
+      @Override
       public void mousePressed(MouseEvent e) {
         if (e.isPopupTrigger()) {
           handlePopupRequest(e.getPoint().x, e.getPoint().y);
@@ -396,6 +413,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
           handleMousePress(e);
         }
       }
+      @Override
       public void mouseReleased(MouseEvent e) {
         if (e.isPopupTrigger()) {
           handlePopupRequest(e.getPoint().x, e.getPoint().y);
@@ -404,6 +422,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 
         handleMouseMove(e, true);
       }
+      @Override
       public void mouseClicked(MouseEvent e) {
         if (e.isPopupTrigger()) {
           handlePopupRequest(e.getPoint().x, e.getPoint().y);
@@ -427,6 +446,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 
     /* Drag and drop files to motes */
     DropTargetListener dTargetListener = new DropTargetListener() {
+      @Override
       public void dragEnter(DropTargetDragEvent dtde) {
         if (acceptOrRejectDrag(dtde)) {
           dtde.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
@@ -434,8 +454,10 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
           dtde.rejectDrag();
         }
       }
+      @Override
       public void dragExit(DropTargetEvent dte) {
       }
+      @Override
       public void dropActionChanged(DropTargetDragEvent dtde) {
         if (acceptOrRejectDrag(dtde)) {
           dtde.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
@@ -443,6 +465,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
           dtde.rejectDrag();
         }
       }
+      @Override
       public void dragOver(DropTargetDragEvent dtde) {
         if (acceptOrRejectDrag(dtde)) {
           dtde.acceptDrag(DnDConstants.ACTION_COPY_OR_MOVE);
@@ -450,6 +473,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
           dtde.rejectDrag();
         }
       }
+      @Override
       public void drop(DropTargetDropEvent dtde) {
         Transferable transferable = dtde.getTransferable();
 
@@ -559,6 +583,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     repaint();
   }
 
+  @Override
   public void startPlugin() {
     super.startPlugin();
     if (loadedConfig) {
@@ -647,6 +672,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
             if (menuAction.isEnabled(this, mote)) {
               JMenuItem menuItem = new JMenuItem(menuAction.getDescription(this, mote));
               menuItem.addActionListener(new ActionListener() {
+                @Override
                 public void actionPerformed(ActionEvent e) {
                   menuAction.doAction(Visualizer.this, mote);
                 }
@@ -670,6 +696,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
         if (menuAction.isEnabled(this, simulation)) {
           JMenuItem menuItem = new JMenuItem(menuAction.getDescription(this, simulation));
           menuItem.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
               menuAction.doAction(Visualizer.this, simulation);
             }
@@ -705,7 +732,8 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 	  /* Mote-to-mote relations */
 	  JCheckBoxMenuItem moteRelationsItem = new JCheckBoxMenuItem("Mote relations", showMoteToMoteRelations);
 	  moteRelationsItem.addItemListener(new ItemListener() {
-		  public void itemStateChanged(ItemEvent e) {
+		  @Override
+      public void itemStateChanged(ItemEvent e) {
 			  JCheckBoxMenuItem menuItem = ((JCheckBoxMenuItem)e.getItem());
 			  showMoteToMoteRelations = menuItem.isSelected();
 			  repaint();
@@ -719,8 +747,8 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
 		  ((JPopupMenu)menu).add(moteRelationsItem);
 		  ((JPopupMenu)menu).add(new JSeparator());
 	  }
-	  
-    for (Class<? extends VisualizerSkin> skinClass: visualizerSkins) {
+
+    for (Class<? extends VisualizerSkin> skinClass: visualizerSkins) { // iPAS, add Skins to the menu
       /* Should skin be enabled in this simulation? */
       if (!isSkinCompatible(skinClass)) {
         continue;
@@ -739,6 +767,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
       }
 
       item.addItemListener(new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           JCheckBoxMenuItem menuItem = ((JCheckBoxMenuItem)e.getItem());
           if (menuItem == null) {
@@ -1162,6 +1191,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     /* Center visible motes */
     final double smallXfinal = smallX, bigXfinal = bigX, smallYfinal = smallY, bigYfinal = bigY;
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         Position viewMid =
           transformPixelToPosition(canvas.getWidth()/2, canvas.getHeight()/2);
@@ -1245,6 +1275,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     return (y - viewportTransform.getTranslateY())/viewportTransform.getScaleY() ;
   }
 
+  @Override
   public void closePlugin() {
     for (VisualizerSkin skin: currentSkins) {
       skin.setInactive();
@@ -1281,6 +1312,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     return clickedMote;
   }
 
+  @Override
   public Collection<Element> getConfigXML() {
     ArrayList<Element> config = new ArrayList<Element>();
     Element element;
@@ -1291,7 +1323,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
         element.setText("" + true);
         config.add(element);
     }
-    
+
     /* Skins */
     for (int i=currentSkins.size()-1; i >= 0; i--) {
     	VisualizerSkin skin = currentSkins.get(i);
@@ -1325,6 +1357,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     return config;
   }
 
+  @Override
   public boolean setConfigXML(Collection<Element> configXML, boolean visAvailable) {
     loadedConfig = true;
     showMoteToMoteRelations = false;
@@ -1338,6 +1371,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
               || wanted.equals(GUI.getDescriptionOf(skinClass))) {
             final Class<? extends VisualizerSkin> skin = skinClass;
             SwingUtilities.invokeLater(new Runnable() {
+              @Override
               public void run() {
                 generateAndActivateSkin(skin);
               }
@@ -1376,6 +1410,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
   }
 
   private AbstractAction makeSkinsDefaultAction = new AbstractAction() {
+    @Override
     public void actionPerformed(ActionEvent e) {
       StringBuilder sb = new StringBuilder();
       for (VisualizerSkin skin: currentSkins) {
@@ -1389,37 +1424,46 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
   };
 
   protected static class ButtonClickMoteMenuAction implements MoteMenuAction {
+    @Override
     public boolean isEnabled(Visualizer visualizer, Mote mote) {
       return mote.getInterfaces().getButton() != null
       && !mote.getInterfaces().getButton().isPressed();
     }
+    @Override
     public String getDescription(Visualizer visualizer, Mote mote) {
       return "Click button on " + mote;
     }
+    @Override
     public void doAction(Visualizer visualizer, Mote mote) {
       mote.getInterfaces().getButton().clickButton();
     }
   };
 
   protected static class DeleteMoteMenuAction implements MoteMenuAction {
+    @Override
     public boolean isEnabled(Visualizer visualizer, Mote mote) {
       return true;
     }
+    @Override
     public String getDescription(Visualizer visualizer, Mote mote) {
       return "Delete " + mote;
     }
+    @Override
     public void doAction(Visualizer visualizer, Mote mote) {
       mote.getSimulation().removeMote(mote);
     }
   };
 
   protected static class ShowLEDMoteMenuAction implements MoteMenuAction {
+    @Override
     public boolean isEnabled(Visualizer visualizer, Mote mote) {
       return mote.getInterfaces().getLED() != null;
     }
+    @Override
     public String getDescription(Visualizer visualizer, Mote mote) {
       return "Show LEDs on " + mote;
     }
+    @Override
     public void doAction(Visualizer visualizer, Mote mote) {
       Simulation simulation = mote.getSimulation();
       LED led = mote.getInterfaces().getLED();
@@ -1445,6 +1489,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
   };
 
   protected static class ShowSerialMoteMenuAction implements MoteMenuAction {
+    @Override
     public boolean isEnabled(Visualizer visualizer, Mote mote) {
       for (MoteInterface intf: mote.getInterfaces().getInterfaces()) {
         if (intf instanceof SerialPort) {
@@ -1453,9 +1498,11 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
       }
       return false;
     }
+    @Override
     public String getDescription(Visualizer visualizer, Mote mote) {
       return "Show serial port on " + mote;
     }
+    @Override
     public void doAction(Visualizer visualizer, Mote mote) {
       Simulation simulation = mote.getSimulation();
       SerialPort serialPort = null;
@@ -1488,31 +1535,38 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
   };
 
   protected static class MoveMoteMenuAction implements MoteMenuAction {
+    @Override
     public boolean isEnabled(Visualizer visualizer, Mote mote) {
       return true;
     }
+    @Override
     public String getDescription(Visualizer visualizer, Mote mote) {
       return "Move " + mote;
     }
+    @Override
     public void doAction(Visualizer visualizer, Mote mote) {
       visualizer.beginMoveRequest(mote, false, false);
     }
   };
 
   protected static class ResetViewportAction implements SimulationMenuAction {
+    @Override
     public void doAction(Visualizer visualizer, Simulation simulation) {
       visualizer.resetViewport = 1;
       visualizer.repaint();
     }
+    @Override
     public String getDescription(Visualizer visualizer, Simulation simulation) {
       return "Reset viewport";
     }
+    @Override
     public boolean isEnabled(Visualizer visualizer, Simulation simulation) {
       return true;
     }
   };
 
   protected static class ToggleDecorationsMenuAction implements SimulationMenuAction {
+    @Override
     public void doAction(final Visualizer visualizer, Simulation simulation) {
       if (!(visualizer.getUI() instanceof BasicInternalFrameUI)) {
         return;
@@ -1529,11 +1583,13 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
       }
       visualizer.revalidate();
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           visualizer.repaint();
         }
       });
     }
+    @Override
     public String getDescription(Visualizer visualizer, Simulation simulation) {
       if (!(visualizer.getUI() instanceof BasicInternalFrameUI)) {
         return "Hide window decorations";
@@ -1546,6 +1602,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
       }
       return "Hide window decorations";
     }
+    @Override
     public boolean isEnabled(Visualizer visualizer, Simulation simulation) {
       if (!(visualizer.getUI() instanceof BasicInternalFrameUI)) {
         return false;
@@ -1554,6 +1611,7 @@ public class Visualizer extends VisPlugin implements HasQuickHelp {
     }
   }
 
+  @Override
   public String getQuickHelp() {
     return
     "<b>Network</b> " +
