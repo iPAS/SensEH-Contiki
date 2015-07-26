@@ -83,6 +83,8 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
 
   private Box top, ratioRX, ratioTX, rangeTX, rangeINT;
 
+  private boolean doShowAllRanges = false; // iPAS
+
   @Override
   public void setActive(Simulation simulation, Visualizer vis) {
     if (!(simulation.getRadioMedium() instanceof UDGM)) {
@@ -176,6 +178,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     });
 
     /* Register menu actions */
+    visualizer.registerSimulationMenuAction(ShowAllRanges.class); // iPAS
     visualizer.registerSimulationMenuAction(RangeMenuAction.class);
     visualizer.registerSimulationMenuAction(SuccessRatioMenuAction.class);
 
@@ -229,6 +232,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     visualizer.getCurrentCanvas().remove(top);
 
     /* Unregister menu actions */
+    visualizer.unregisterSimulationMenuAction(ShowAllRanges.class); // iPAS
     visualizer.unregisterSimulationMenuAction(RangeMenuAction.class);
     visualizer.unregisterSimulationMenuAction(SuccessRatioMenuAction.class);
   }
@@ -244,20 +248,20 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
 
   @Override
   public void paintBeforeMotes(Graphics g) {
-    boolean hasToDoAll = true;
+    boolean doShowAllRanges = this.doShowAllRanges;
 
-    /* --- Original one of COOJA --- */
+    /* --- iPAS, Original one of COOJA --- */
     Mote selectedMote = visualizer.getSelectedMote();
-    if (simulation == null
-        || selectedMote == null
-        || selectedMote.getInterfaces().getRadio() == null) {
-      return;
-    }
+//    if (simulation == null
+//        || selectedMote == null
+//        || selectedMote.getInterfaces().getRadio() == null) {
+//      return;
+//    }
 
 
     // iPAS, get all motes
     Mote [] motes = {selectedMote};
-    if (hasToDoAll)
+    if (doShowAllRanges)
       motes = simulation.getMotes();
 
     for (Mote mote : motes) {
@@ -365,6 +369,38 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
   @Override
   public void paintAfterMotes(Graphics g) {
   }
+
+  public static class ShowAllRanges implements SimulationMenuAction { // iPAS, show all node tx,int ranges
+    @Override
+    public boolean isEnabled(Visualizer visualizer, Simulation simulation) {
+      return true;
+    }
+
+    @Override
+    public String getDescription(Visualizer visualizer, Simulation simulation) {
+      VisualizerSkin[] skins = visualizer.getCurrentSkins();
+      for (VisualizerSkin skin: skins) {
+        if (skin instanceof UDGMVisualizerSkin) {
+          if ( ((UDGMVisualizerSkin)skin).doShowAllRanges == true )
+            return "Disable showing all nodes ranges";
+          else
+            return "Enable showing all nodes ranges";
+        }
+      }
+      return "Cannot find UDGMVisualizerSkin";
+    }
+
+    @Override
+    public void doAction(Visualizer visualizer, Simulation simulation) {
+      VisualizerSkin[] skins = visualizer.getCurrentSkins();
+      for (VisualizerSkin skin: skins) {
+        if (skin instanceof UDGMVisualizerSkin) {
+          ((UDGMVisualizerSkin)skin).doShowAllRanges = !((UDGMVisualizerSkin)skin).doShowAllRanges;
+          visualizer.repaint();
+        }
+      }
+    }
+  };
 
   public static class RangeMenuAction implements SimulationMenuAction {
     @Override
