@@ -9,7 +9,7 @@
   <project EXPORT="discard">[APPS_DIR]/powertracker</project>
   <simulation>
     <title>Test Single-flow Throughput</title>
-    <speedlimit>0.1</speedlimit>
+    <speedlimit>1.0</speedlimit>
     <randomseed>123456</randomseed>
     <motedelay_us>1000000</motedelay_us>
     <radiomedium>
@@ -49,8 +49,8 @@
       <breakpoints />
       <interface_config>
         se.sics.cooja.interfaces.Position
-        <x>0.0</x>
-        <y>0.0</y>
+        <x>150.0</x>
+        <y>-0.0</y>
         <z>0.0</z>
       </interface_config>
       <interface_config>
@@ -63,8 +63,8 @@
       <breakpoints />
       <interface_config>
         se.sics.cooja.interfaces.Position
-        <x>100.0</x>
-        <y>0.0</y>
+        <x>75.0</x>
+        <y>60.0</y>
         <z>0.0</z>
       </interface_config>
       <interface_config>
@@ -77,8 +77,8 @@
       <breakpoints />
       <interface_config>
         se.sics.cooja.interfaces.Position
-        <x>200.0</x>
-        <y>0.0</y>
+        <x>75.0</x>
+        <y>-60.0</y>
         <z>0.0</z>
       </interface_config>
       <interface_config>
@@ -87,14 +87,28 @@
       </interface_config>
       <motetype_identifier>sky1</motetype_identifier>
     </mote>
+    <mote>
+      <breakpoints />
+      <interface_config>
+        se.sics.cooja.interfaces.Position
+        <x>0.0</x>
+        <y>0.0</y>
+        <z>0.0</z>
+      </interface_config>
+      <interface_config>
+        se.sics.cooja.mspmote.interfaces.MspMoteID
+        <id>4</id>
+      </interface_config>
+      <motetype_identifier>sky1</motetype_identifier>
+    </mote>
   </simulation>
   <plugin>
     se.sics.cooja.plugins.SimControl
     <width>280</width>
-    <z>3</z>
+    <z>1</z>
     <height>160</height>
-    <location_x>1</location_x>
-    <location_y>283</location_y>
+    <location_x>11</location_x>
+    <location_y>398</location_y>
   </plugin>
   <plugin>
     se.sics.cooja.plugins.Visualizer
@@ -104,12 +118,12 @@
       <skin>se.sics.cooja.plugins.skins.GridVisualizerSkin</skin>
       <skin>se.sics.cooja.plugins.skins.TrafficVisualizerSkin</skin>
       <skin>se.sics.cooja.plugins.skins.UDGMVisualizerSkin</skin>
-      <viewport>0.9090909090909091 0.0 0.0 0.9090909090909091 42.0909090909091 124.0</viewport>
+      <viewport>1.6359519424868079 0.0 0.0 1.6359519424868079 21.058272833516362 113.90762864848628</viewport>
       <hidden />
     </plugin_config>
-    <width>279</width>
-    <z>4</z>
-    <height>278</height>
+    <width>305</width>
+    <z>2</z>
+    <height>273</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
   </plugin>
@@ -121,11 +135,11 @@
       <coloring />
       <hidedebug />
     </plugin_config>
-    <width>623</width>
+    <width>688</width>
     <z>0</z>
     <height>563</height>
-    <location_x>283</location_x>
-    <location_y>2</location_y>
+    <location_x>308</location_x>
+    <location_y>-3</location_y>
   </plugin>
   <plugin>
     se.sics.cooja.plugins.TimeLine
@@ -133,16 +147,16 @@
       <mote>0</mote>
       <mote>1</mote>
       <mote>2</mote>
+      <mote>3</mote>
       <showRadioRXTX />
       <showRadioHW />
-      <showLEDs />
       <zoomfactor>938.8052896321715</zoomfactor>
     </plugin_config>
     <width>1366</width>
-    <z>6</z>
-    <height>166</height>
+    <z>3</z>
+    <height>176</height>
     <location_x>0</location_x>
-    <location_y>539</location_y>
+    <location_y>529</location_y>
   </plugin>
   <plugin>
     se.sics.cooja.plugins.MoteInterfaceViewer
@@ -152,7 +166,7 @@
       <scrollpos>0,0</scrollpos>
     </plugin_config>
     <width>314</width>
-    <z>1</z>
+    <z>4</z>
     <height>262</height>
     <location_x>684</location_x>
     <location_y>-4</location_y>
@@ -165,7 +179,7 @@
       <scrollpos>0,0</scrollpos>
     </plugin_config>
     <width>312</width>
-    <z>2</z>
+    <z>5</z>
     <height>300</height>
     <location_x>685</location_x>
     <location_y>264</location_y>
@@ -177,7 +191,7 @@
       <active>true</active>
     </plugin_config>
     <width>368</width>
-    <z>5</z>
+    <z>6</z>
     <height>561</height>
     <location_x>996</location_x>
     <location_y>-4</location_y>

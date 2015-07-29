@@ -8,7 +8,7 @@
  *   se.sics.cooja.Simulation sim -- The simulation Simulation.java
  *   se.sics.cooja.Gui gui -- The GUI Gui.java
  */
-sending_periods = [1000, 2000]; //, 3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000];
+sending_periods = [250, 500, 750, 1000, 1250, 1500, 1750, 2000]; 
 
 test_period = 60000; // Time limiting 
 test_packet = 100; // Packet number limiting

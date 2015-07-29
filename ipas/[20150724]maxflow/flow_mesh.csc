@@ -26,9 +26,9 @@
       se.sics.cooja.mspmote.SkyMoteType
       <identifier>sky1</identifier>
       <description>Sky Multihop Mote Type</description>
-      <source EXPORT="discard">[CONTIKI_DIR]/ipas/[20150724]maxflow/multihop_st.c</source>
-      <commands EXPORT="discard">make multihop_st.sky TARGET=sky</commands>
-      <firmware EXPORT="copy">[CONTIKI_DIR]/ipas/[20150724]maxflow/multihop_st.sky</firmware>
+      <source EXPORT="discard">[CONTIKI_DIR]/ipas/[20150724]maxflow/mesh_st.c</source>
+      <commands EXPORT="discard">make mesh_st.sky TARGET=sky</commands>
+      <firmware EXPORT="copy">[CONTIKI_DIR]/ipas/[20150724]maxflow/mesh_st.sky</firmware>
       <moteinterface>se.sics.cooja.interfaces.Position</moteinterface>
       <moteinterface>se.sics.cooja.interfaces.RimeAddress</moteinterface>
       <moteinterface>se.sics.cooja.interfaces.IPAddress</moteinterface>
@@ -91,7 +91,7 @@
   <plugin>
     se.sics.cooja.plugins.SimControl
     <width>280</width>
-    <z>3</z>
+    <z>2</z>
     <height>160</height>
     <location_x>1</location_x>
     <location_y>283</location_y>
@@ -104,11 +104,11 @@
       <skin>se.sics.cooja.plugins.skins.GridVisualizerSkin</skin>
       <skin>se.sics.cooja.plugins.skins.TrafficVisualizerSkin</skin>
       <skin>se.sics.cooja.plugins.skins.UDGMVisualizerSkin</skin>
-      <viewport>0.9090909090909091 0.0 0.0 0.9090909090909091 42.0909090909091 124.0</viewport>
+      <viewport>0.9364478114478112 0.0 0.0 0.9364478114478112 53.43995510662177 106.42987511535645</viewport>
       <hidden />
     </plugin_config>
     <width>279</width>
-    <z>4</z>
+    <z>0</z>
     <height>278</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
@@ -121,9 +121,9 @@
       <coloring />
       <hidedebug />
     </plugin_config>
-    <width>623</width>
-    <z>0</z>
-    <height>563</height>
+    <width>535</width>
+    <z>4</z>
+    <height>562</height>
     <location_x>283</location_x>
     <location_y>2</location_y>
   </plugin>
@@ -135,11 +135,10 @@
       <mote>2</mote>
       <showRadioRXTX />
       <showRadioHW />
-      <showLEDs />
-      <zoomfactor>938.8052896321715</zoomfactor>
+      <zoomfactor>55.40157918116694</zoomfactor>
     </plugin_config>
     <width>1366</width>
-    <z>6</z>
+    <z>1</z>
     <height>166</height>
     <location_x>0</location_x>
     <location_y>539</location_y>
@@ -152,10 +151,10 @@
       <scrollpos>0,0</scrollpos>
     </plugin_config>
     <width>314</width>
-    <z>1</z>
+    <z>6</z>
     <height>262</height>
-    <location_x>684</location_x>
-    <location_y>-4</location_y>
+    <location_x>685</location_x>
+    <location_y>3</location_y>
   </plugin>
   <plugin>
     se.sics.cooja.plugins.MoteInterfaceViewer
@@ -165,7 +164,7 @@
       <scrollpos>0,0</scrollpos>
     </plugin_config>
     <width>312</width>
-    <z>2</z>
+    <z>5</z>
     <height>300</height>
     <location_x>685</location_x>
     <location_y>264</location_y>
@@ -177,7 +176,7 @@
       <active>true</active>
     </plugin_config>
     <width>368</width>
-    <z>5</z>
+    <z>3</z>
     <height>561</height>
     <location_x>996</location_x>
     <location_y>-4</location_y>
