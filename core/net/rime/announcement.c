@@ -143,7 +143,7 @@ announcement_heard(const rimeaddr_t *from, uint16_t id, uint16_t value)
   for(a = list_head(announcements); a != NULL; a = list_item_next(a)) {
     if(a->id == id) {
       if(a->callback != NULL) {
-	a->callback(a, from, id, value);
+        a->callback(a, from, id, value);
       }
       return;
     }

@@ -383,11 +383,9 @@ void
 shell_output_str(struct shell_command *c, char *text1, const char *text2)
 {
   if(c != NULL && c->child != NULL) {
-    input_to_child_command(c->child, text1, (int)strlen(text1),
-			   text2, (int)strlen(text2));
+    input_to_child_command(c->child, text1, (int)strlen(text1), text2, (int)strlen(text2));
   } else {
-    shell_default_output(text1, (int)strlen(text1),
-			 text2, (int)strlen(text2));
+    shell_default_output(text1, (int)strlen(text1), text2, (int)strlen(text2));
   }
 }
 /*---------------------------------------------------------------------------*/
