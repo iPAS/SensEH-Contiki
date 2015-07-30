@@ -33,7 +33,7 @@
    radios, but consumes a lot of power. The contikimac_driver is
    highly power-efficent and allows sleepy routers, but is not
    compatible with all radios. */
-#undef NETSTACK_CONF_RDC
+#undef  NETSTACK_CONF_RDC
 //#define NETSTACK_CONF_RDC   nullrdc_driver
 #define NETSTACK_CONF_RDC   xmac_driver
 //#define NETSTACK_CONF_RDC   contikimac_driver
@@ -57,5 +57,8 @@
    may reduce power consumption but is not compatible with all timer
    settings and is therefore off by default. */
 #define CONTIKIMAC_CONF_WITH_PHASE_OPTIMIZATION 0
+
+//#undef  XMAC_CONF_ANNOUNCEMENTS
+//#define XMAC_CONF_ANNOUNCEMENTS 1
 
 #endif // __PROJECT_CONF_H__

@@ -52,6 +52,9 @@
 #include "dev/button-sensor.h"
 #include "dev/leds.h"
 
+#include "shell.h"
+#include "serial-shell.h"
+
 #include <stdio.h>
 #include <string.h>
 #define DEBUG 1
@@ -66,7 +69,9 @@
 #define NODE_S
 #define NODE_T
 
-#define NEIGHBOR_TIMEOUT 60 * CLOCK_SECOND * 5
+//#define NEIGHBOR_TIMEOUT (60*CLOCK_SECOND) // 1 minute
+#define NEIGHBOR_TIMEOUT (24UL*60*60*CLOCK_SECOND) // XXX: set it as perpetual
+
 #define MAX_NEIGHBORS 16
 LIST(neighbor_table);
 struct neighbor {
@@ -74,6 +79,7 @@ struct neighbor {
     rimeaddr_t addr;
     struct ctimer keep_alive_timer;
     uint32_t sent_packet_count;
+    uint32_t recv_packet_count;
 };
 MEMB(neighbor_mem, struct neighbor, MAX_NEIGHBORS); // Declare memory block for dynamic allocation
 
@@ -83,10 +89,70 @@ static struct announcement greeting_announcement;
  * This function is called by the ctimer presented in each neighbor table entry.
  * The neighbor whose time is up has to be removed from the table.
  */
-static void remove_neighbor(void *n) {
-    struct neighbor *e = n;
-    list_remove(neighbor_table, e);
-    memb_free(&neighbor_mem, e);
+static void remove_neighbor(void *neighbor) {
+    struct neighbor *n = neighbor;
+    PRINTF("%d.%d: losing %d.%d\n",
+            rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1], n->addr.u8[0], n->addr.u8[1]);
+    list_remove(neighbor_table, n);
+    memb_free(&neighbor_mem, n);
+}
+
+/** ---------------------------------------------------------------------------
+ * Find neighbor by address
+ */
+static struct neighbor * find_neighbor(const rimeaddr_t *addr) {
+    struct neighbor *n;
+    for (n = list_head(neighbor_table); n != NULL; n = list_item_next(n))
+        if (rimeaddr_cmp(addr, &n->addr))
+            return n;
+    return NULL;
+}
+
+/** ---------------------------------------------------------------------------
+ * Add new neighbor by address
+ */
+static struct neighbor * add_neighbor(const rimeaddr_t *addr) {
+    struct neighbor *n;
+    n = memb_alloc(&neighbor_mem);
+    if (n != NULL) {
+        list_add(neighbor_table, n);
+        rimeaddr_copy(&n->addr, addr);
+        n->sent_packet_count = 0;
+        n->recv_packet_count = 0;
+        ctimer_set(&n->keep_alive_timer, NEIGHBOR_TIMEOUT, remove_neighbor, n); // Start waiting a packet
+    }
+    return n;
+}
+
+/** ---------------------------------------------------------------------------
+ * Reset neighbor data
+ */
+static void reset_neighbor(struct neighbor *n) {
+    n->sent_packet_count = 0;
+    n->recv_packet_count = 0;
+    ctimer_restart(&n->keep_alive_timer);
+}
+
+/** ---------------------------------------------------------------------------
+ * Count total number of in-flow packets
+ */
+static uint32_t total_incoming_packet(void) {
+    uint32_t total = 0;
+    struct neighbor *n;
+         for (n = list_head(neighbor_table); n != NULL; n = list_item_next(n))
+             total += n->recv_packet_count;
+    return total;
+}
+
+/** ---------------------------------------------------------------------------
+ * Count total number of out-flow packets
+ */
+static uint32_t total_outgoing_packet(void) {
+    uint32_t total = 0;
+    struct neighbor *n;
+    for (n = list_head(neighbor_table); n != NULL; n = list_item_next(n))
+        total += n->sent_packet_count;
+    return total;
 }
 
 /** ---------------------------------------------------------------------------
@@ -96,33 +162,24 @@ static void remove_neighbor(void *n) {
  */
 static void received_announcement(
         struct announcement *a, const rimeaddr_t *from, uint16_t id, uint16_t value) {
-    struct neighbor *e;
     PRINTF("%d.%d: announced from %d.%d, id:%d value:%d\n",
-            rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1], from->u8[0],
-            from->u8[1], id, value);
+            rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1], from->u8[0], from->u8[1], id, value);
 
     /* The announcement are updated to the neighbor list,
      or add a new entry to the table. */
 
     /* Try finding out that we have known each other already. */
-    for (e = list_head(neighbor_table); e != NULL; e = e->next) {
-        if (rimeaddr_cmp(from, &e->addr)) { // Our neighbor was found, so we update the timeout.
-            ctimer_set(&e->keep_alive_timer, NEIGHBOR_TIMEOUT, remove_neighbor, e);
-            return;
-        }
+    struct neighbor *n = find_neighbor(from);
+    if (n != NULL) { // Our neighbor was found, so we update the timeout.
+        ctimer_restart(&n->keep_alive_timer); // Make it be still alive
+        return;
     }
 
     /* The neighbor was not found in the list,
      so we add a new entry by allocating memory from the neighbor_mem pool,
      fill in the necessary fields,
      and add it to the list. */
-    e = memb_alloc(&neighbor_mem);
-    if (e != NULL) {
-        list_add(neighbor_table, e);
-        rimeaddr_copy(&e->addr, from);
-        e->sent_packet_count = 0;
-        ctimer_set(&e->keep_alive_timer, NEIGHBOR_TIMEOUT, remove_neighbor, e);
-    }
+    add_neighbor(from);
 }
 
 /** ---------------------------------------------------------------------------
@@ -130,6 +187,12 @@ static void received_announcement(
  */
 static void recv(
         struct multihop_conn *c, const rimeaddr_t *sender, const rimeaddr_t *prevhop, uint8_t hops) {
+    struct neighbor *n = find_neighbor(prevhop);
+    if (n != NULL) {
+        n->recv_packet_count++;
+        ctimer_restart(&n->keep_alive_timer); // Make it be still alive
+    }
+
     PRINTF("%d.%d: received   packet(%d.%d @%d-hop)      from %d.%d > %.*s (%d bytes)\n",
             rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1],
             sender->u8[0], sender->u8[1], hops,
@@ -139,49 +202,29 @@ static void recv(
 
 /** ---------------------------------------------------------------------------
  * The function picks a random neighbor from the neighbor list and returns its address.
- */
-static struct neighbor * select_friend_randomly(
-        const rimeaddr_t *originator, const rimeaddr_t *dest, const rimeaddr_t *prevhop) {
-    struct neighbor *n;
-    int num = random_rand() % list_length(neighbor_table);
-    int i = 0;
-    for (n = list_head(neighbor_table); n != NULL && i != num; n = n->next)
-        ++i; // walking on the list
-    return n;
-}
-
-/** ---------------------------------------------------------------------------
- * The function picks a random neighbor from the neighbor list and returns its address.
  * The picked one MUST not be the previous node.
  */
 static struct neighbor * select_friend_randomly_wisely(
         const rimeaddr_t *originator, const rimeaddr_t *dest, const rimeaddr_t *prevhop) {
-    if (list_length(neighbor_table) >= 2) {
-        struct neighbor *n;
-        do {
-        int num = random_rand() % list_length(neighbor_table);
-        int i = 0;
-        for (n = list_head(neighbor_table); n != NULL && i != num; n = n->next)
-            ++i; // walking on the list
-        } while (rimeaddr_cmp( &n->addr, prevhop ));
+    uint8_t len = list_length(neighbor_table);
+    struct neighbor *n = NULL;
 
+    if (len == 1) { // Sometime, an announcement comes after a forwarded packet
+        n = list_head(neighbor_table);
+        if (rimeaddr_cmp(&n->addr, dest))
+            return n;
+    } else
+    if(len >= 2) {
+        do {
+            int num = random_rand() % len;
+            int i = 0;
+            for (n = list_head(neighbor_table); n != NULL && i != num; n = list_item_next(n))
+                ++i; // walking on the list
+        } while (rimeaddr_cmp(&n->addr, prevhop)); // Not send it back!
         return n;
     }
 
     return NULL;
-}
-
-/**
- * The function picks the nearest neighbor from the neighbor list and returns its address.
- */
-static struct neighbor * select_friend_nearest(
-        const rimeaddr_t *originator, const rimeaddr_t *dest, const rimeaddr_t *prevhop) {
-    struct neighbor *n;
-    for (n = list_head(neighbor_table); n != NULL; n = n->next) { // walking on the list
-//        n->addr.u8[]
-        // TODO: Implement it
-    }
-    return n;
 }
 
 /** ---------------------------------------------------------------------------
@@ -194,27 +237,33 @@ static struct neighbor * select_friend_nearest(
 static rimeaddr_t * forward(
         struct multihop_conn *c, const rimeaddr_t *originator, const rimeaddr_t *dest,
         const rimeaddr_t *prevhop, uint8_t hops) {
+    struct neighbor *n = find_neighbor(prevhop);
+    if (n == NULL)
+        n = add_neighbor(prevhop); // Create new one if not exist
+    n->recv_packet_count++;
+    ctimer_restart(&n->keep_alive_timer); // Make it be still alive
+
     /* Find a neighbor to forward the message through. */
     if (list_length(neighbor_table) > 0) {
-        struct neighbor *n;
-//        n = select_friend_randomly(originator, dest, prevhop); // TODO: Implement a better routing mechanism.
-        n = select_friend_randomly_wisely(originator, dest, prevhop);
+        struct neighbor *p = n;
+        n = select_friend_randomly_wisely(originator, dest, prevhop); // Routing mechanism
 
-        if (n != NULL) {
+        if (n != NULL) { // Found next-hop
             n->sent_packet_count++; // Count a sending out packet.
 
             if (rimeaddr_cmp(&rimeaddr_node_addr, originator))
-                PRINTF("%d.%d: forwarding packet(%d.%d->%d.%d @%d-hop) to %d.%d\n",
+                PRINTF("%d.%d: forwarding packet(%d.%d->%d.%d @%d-hop) to %d.%d (%lu)\n",
                         rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1],
                         originator->u8[0], originator->u8[1], dest->u8[0], dest->u8[1],
                         packetbuf_attr(PACKETBUF_ATTR_HOPS),
-                        n->addr.u8[0], n->addr.u8[1]);
+                        n->addr.u8[0], n->addr.u8[1], n->sent_packet_count);
             else
-                PRINTF("%d.%d: forwarding packet(%d.%d->%d.%d @%d-hop) from %d.%d to %d.%d\n",
+                PRINTF("%d.%d: forwarding packet(%d.%d->%d.%d @%d-hop) from %d.%d to %d.%d (%lu,%lu)\n",
                         rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1],
                         originator->u8[0], originator->u8[1], dest->u8[0], dest->u8[1],
                         packetbuf_attr(PACKETBUF_ATTR_HOPS),
-                        prevhop->u8[0], prevhop->u8[1], n->addr.u8[0], n->addr.u8[1]);
+                        prevhop->u8[0], prevhop->u8[1], n->addr.u8[0], n->addr.u8[1],
+                        p->recv_packet_count, n->sent_packet_count);
             return &n->addr;
         }
     }
@@ -222,6 +271,39 @@ static rimeaddr_t * forward(
     PRINTF("%d.%d: NOT found a neighbor to forward to %d.%d\n",
             rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1], dest->u8[0], dest->u8[1]);
     return NULL;
+}
+
+/** ---------------------------------------------------------------------------
+ * Show statistics via serial-shell command.
+ */
+PROCESS(stat_command_process, "Show statistics");
+SHELL_COMMAND(stat_command, "stat", "stat [reset]: shows statistics", &stat_command_process);
+
+PROCESS_THREAD(stat_command_process, ev, data) {
+    PROCESS_BEGIN();
+
+    enum {false=0, true} do_reset = false;
+    if (strcmp((char *)data, "reset") == 0)
+        do_reset = true;
+
+    struct neighbor *n;
+    char str1[12], str2[200];
+    int i=0;
+    sprintf(str1, "%d.%d: stat", rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1]);
+
+    strcpy(str2, " NO neighbor");
+    for (n = list_head(neighbor_table); n != NULL; n = list_item_next(n)) {
+        i += sprintf(&str2[i], " %d.%d=%lu/%lu,",
+                n->addr.u8[0], n->addr.u8[1], n->recv_packet_count, n->sent_packet_count);
+        if (do_reset)
+            reset_neighbor(n);
+    }
+
+    //if (i > 0) str2[--i] = '\0';
+    i += sprintf(&str2[i], " (%lu/%lu)", total_incoming_packet(), total_outgoing_packet());
+    shell_output_str(&stat_command, str1, str2);
+
+    PROCESS_END();
 }
 
 /** ---------------------------------------------------------------------------
@@ -237,14 +319,24 @@ PROCESS_THREAD(multihop_process, ev, data) {
     PROCESS_EXITHANDLER(multihop_close(&conn));
     PROCESS_BEGIN();
 
+    serial_shell_init();
+    shell_register_command(&stat_command);
+
     memb_init(&neighbor_mem); // Initialize the memory for the neighbor table entries.
     list_init(neighbor_table); // Initialize the list used for the neighbor table.
     multihop_open(&conn, CHANNEL, &callbacks); // Open the connection on Rime channel CHANNEL.
 
     /* Register an announcement with the same announcement ID as the Rime channel
-     that we use to open the multihop connection above. */
+     that we use to open the multihop connection above.
+     An announcement message are broadcasted automatically by XMAC stack.
+     Please take a look in xmac.c for further information.
+
+     #define XMAC_CONF_ANNOUNCEMENTS 1
+     ANNOUNCEMENT_PERIOD = 4 seconds
+     */
     announcement_register(&greeting_announcement, CHANNEL, received_announcement);
     announcement_set_value(&greeting_announcement, 0); // Set a dummy value to start sending out announcments.
+
 
     /* Activate the button sensor.
      We use the button to drive traffic when the button is pressed, a packet is sent. */

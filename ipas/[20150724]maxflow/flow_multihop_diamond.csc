@@ -9,7 +9,6 @@
   <project EXPORT="discard">[APPS_DIR]/powertracker</project>
   <simulation>
     <title>Test Single-flow Throughput</title>
-    <speedlimit>1.0</speedlimit>
     <randomseed>123456</randomseed>
     <motedelay_us>1000000</motedelay_us>
     <radiomedium>
@@ -57,6 +56,10 @@
         se.sics.cooja.mspmote.interfaces.MspMoteID
         <id>1</id>
       </interface_config>
+      <interface_config>
+        se.sics.cooja.mspmote.interfaces.MspSerial
+        <history>stat~;</history>
+      </interface_config>
       <motetype_identifier>sky1</motetype_identifier>
     </mote>
     <mote>
@@ -70,6 +73,10 @@
       <interface_config>
         se.sics.cooja.mspmote.interfaces.MspMoteID
         <id>2</id>
+      </interface_config>
+      <interface_config>
+        se.sics.cooja.mspmote.interfaces.MspSerial
+        <history>stat~;?~;</history>
       </interface_config>
       <motetype_identifier>sky1</motetype_identifier>
     </mote>
@@ -99,13 +106,17 @@
         se.sics.cooja.mspmote.interfaces.MspMoteID
         <id>4</id>
       </interface_config>
+      <interface_config>
+        se.sics.cooja.mspmote.interfaces.MspSerial
+        <history>stat~;</history>
+      </interface_config>
       <motetype_identifier>sky1</motetype_identifier>
     </mote>
   </simulation>
   <plugin>
     se.sics.cooja.plugins.SimControl
     <width>280</width>
-    <z>1</z>
+    <z>5</z>
     <height>160</height>
     <location_x>11</location_x>
     <location_y>398</location_y>
@@ -122,7 +133,7 @@
       <hidden />
     </plugin_config>
     <width>305</width>
-    <z>2</z>
+    <z>3</z>
     <height>273</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
@@ -135,9 +146,9 @@
       <coloring />
       <hidedebug />
     </plugin_config>
-    <width>688</width>
-    <z>0</z>
-    <height>563</height>
+    <width>675</width>
+    <z>1</z>
+    <height>566</height>
     <location_x>308</location_x>
     <location_y>-3</location_y>
   </plugin>
@@ -150,26 +161,13 @@
       <mote>3</mote>
       <showRadioRXTX />
       <showRadioHW />
-      <zoomfactor>938.8052896321715</zoomfactor>
+      <zoomfactor>4649.933039741792</zoomfactor>
     </plugin_config>
     <width>1366</width>
-    <z>3</z>
+    <z>6</z>
     <height>176</height>
     <location_x>0</location_x>
     <location_y>529</location_y>
-  </plugin>
-  <plugin>
-    se.sics.cooja.plugins.MoteInterfaceViewer
-    <mote_arg>0</mote_arg>
-    <plugin_config>
-      <interface>Serial port</interface>
-      <scrollpos>0,0</scrollpos>
-    </plugin_config>
-    <width>314</width>
-    <z>4</z>
-    <height>262</height>
-    <location_x>684</location_x>
-    <location_y>-4</location_y>
   </plugin>
   <plugin>
     se.sics.cooja.plugins.MoteInterfaceViewer
@@ -178,10 +176,10 @@
       <interface>Serial port</interface>
       <scrollpos>0,0</scrollpos>
     </plugin_config>
-    <width>312</width>
-    <z>5</z>
+    <width>504</width>
+    <z>4</z>
     <height>300</height>
-    <location_x>685</location_x>
+    <location_x>493</location_x>
     <location_y>264</location_y>
   </plugin>
   <plugin>
@@ -191,10 +189,34 @@
       <active>true</active>
     </plugin_config>
     <width>368</width>
-    <z>6</z>
+    <z>0</z>
     <height>561</height>
     <location_x>996</location_x>
     <location_y>-4</location_y>
+  </plugin>
+  <plugin>
+    SensEHGUI
+    <plugin_config>
+      <eh_config_file EXPORT="copy">[APPS_DIR]/senseh/config/EH.config</eh_config_file>
+    </plugin_config>
+    <width>299</width>
+    <z>7</z>
+    <height>100</height>
+    <location_x>0</location_x>
+    <location_y>284</location_y>
+  </plugin>
+  <plugin>
+    se.sics.cooja.plugins.MoteInterfaceViewer
+    <mote_arg>2</mote_arg>
+    <plugin_config>
+      <interface>Serial port</interface>
+      <scrollpos>0,0</scrollpos>
+    </plugin_config>
+    <width>501</width>
+    <z>2</z>
+    <height>291</height>
+    <location_x>494</location_x>
+    <location_y>-6</location_y>
   </plugin>
 </simconf>
 
