@@ -51,22 +51,22 @@ import se.sics.cooja.plugins.skins.UDGMVisualizerSkin;
 
 /**
  * The Unit Disk Graph Radio Medium abstracts radio transmission range as circles.
- * 
+ *
  * It uses two different range parameters: one for transmissions, and one for
  * interfering with other radios and transmissions.
- * 
+ *
  * Both radio ranges grow with the radio output power indicator.
  * The range parameters are multiplied with [output power]/[maximum output power].
- * For example, if the transmission range is 100m, the current power indicator 
- * is 50, and the maximum output power indicator is 100, then the resulting transmission 
+ * For example, if the transmission range is 100m, the current power indicator
+ * is 50, and the maximum output power indicator is 100, then the resulting transmission
  * range becomes 50m.
- * 
+ *
  * For radio transmissions within range, two different success ratios are used [0.0-1.0]:
  * one for successful transmissions, and one for successful receptions.
  * If the transmission fails, no radio will hear the transmission.
  * If one of receptions fail, only that receiving radio will not receive the transmission,
- * but will be interfered throughout the entire radio connection.  
- * 
+ * but will be interfered throughout the entire radio connection.
+ *
  * The received radio packet signal strength grows inversely with the distance to the
  * transmitter.
  *
@@ -95,6 +95,7 @@ public class UDGM extends AbstractRadioMedium {
     super(simulation);
     random = simulation.getRandomGenerator();
     dgrm = new DirectedGraphMedium() {
+      @Override
       protected void analyzeEdges() {
         /* Create edges according to distances.
          * XXX May be slow for mobile networks */
@@ -111,7 +112,7 @@ public class UDGM extends AbstractRadioMedium {
             if (distance < Math.max(TRANSMITTING_RANGE, INTERFERENCE_RANGE)) {
               /* Add potential destination */
               addEdge(
-                  new DirectedGraphMedium.Edge(source, 
+                  new DirectedGraphMedium.Edge(source,
                       new DGRMDestinationRadio(dest)));
             }
           }
@@ -123,16 +124,19 @@ public class UDGM extends AbstractRadioMedium {
     /* Register as position observer.
      * If any positions change, re-analyze potential receivers. */
     final Observer positionObserver = new Observer() {
+      @Override
       public void update(Observable o, Object arg) {
         dgrm.requestEdgeAnalysis();
       }
     };
     /* Re-analyze potential receivers if radios are added/removed. */
     simulation.getEventCentral().addMoteCountListener(new MoteCountListener() {
+      @Override
       public void moteWasAdded(Mote mote) {
         mote.getInterfaces().getPosition().addObserver(positionObserver);
         dgrm.requestEdgeAnalysis();
       }
+      @Override
       public void moteWasRemoved(Mote mote) {
         mote.getInterfaces().getPosition().deleteObserver(positionObserver);
         dgrm.requestEdgeAnalysis();
@@ -147,12 +151,13 @@ public class UDGM extends AbstractRadioMedium {
     Visualizer.registerVisualizerSkin(UDGMVisualizerSkin.class);
   }
 
+  @Override
   public void removed() {
   	super.removed();
-  	
+
 		Visualizer.unregisterVisualizerSkin(UDGMVisualizerSkin.class);
   }
-  
+
   public void setTxRange(double r) {
     TRANSMITTING_RANGE = r;
     dgrm.requestEdgeAnalysis();
@@ -163,6 +168,7 @@ public class UDGM extends AbstractRadioMedium {
     dgrm.requestEdgeAnalysis();
   }
 
+  @Override
   public RadioConnection createConnections(Radio sender) {
     RadioConnection newConnection = new RadioConnection(sender);
 
@@ -172,9 +178,9 @@ public class UDGM extends AbstractRadioMedium {
     }
 
     /* Calculate ranges: grows with radio output power */
-    double moteTransmissionRange = TRANSMITTING_RANGE * 
+    double moteTransmissionRange = TRANSMITTING_RANGE *
         ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
-    double moteInterferenceRange = INTERFERENCE_RANGE * 
+    double moteInterferenceRange = INTERFERENCE_RANGE *
         ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
 
     /* Get all potential destination radios */
@@ -188,7 +194,7 @@ public class UDGM extends AbstractRadioMedium {
     for (DestinationRadio dest: potentialDestinations) {
       Radio recv = dest.radio;
 
-      /* Fail if radios are on different (but configured) channels */ 
+      /* Fail if radios are on different (but configured) channels */
       if (sender.getChannel() >= 0 &&
           recv.getChannel() >= 0 &&
           sender.getChannel() != recv.getChannel()) {
@@ -198,7 +204,7 @@ public class UDGM extends AbstractRadioMedium {
 
       /* Fail if radio is turned off */
 //      if (!recv.isReceiverOn()) {
-//        /* Special case: allow connection if source is Contiki radio, 
+//        /* Special case: allow connection if source is Contiki radio,
 //         * and destination is something else (byte radio).
 //         * Allows cross-level communication with power-saving MACs. */
 //        if (sender instanceof ContikiRadio &&
@@ -211,20 +217,20 @@ public class UDGM extends AbstractRadioMedium {
 //      }
 
       double distance = senderPos.getDistanceTo(recvPos);
-      if (distance <= moteTransmissionRange) {
-        /* Within transmission range */
+      if (distance <= moteTransmissionRange) { /* Within transmission range */
 
         if (!recv.isRadioOn()) {
           newConnection.addInterfered(recv);
           recv.interfereAnyReception();
-        } else if (recv.isInterfered()) {
-          /* Was interfered: keep interfering */
+
+        } else if (recv.isInterfered()) { /* Was interfered: keep interfering */
           newConnection.addInterfered(recv);
+
         } else if (recv.isTransmitting()) {
           newConnection.addInterfered(recv);
-        } else if (recv.isReceiving() ||
+
+        } else if (recv.isReceiving() || /* Was receiving, or reception failed: start interfering */
             (random.nextDouble() > getRxSuccessProbability(sender, recv))) {
-          /* Was receiving, or reception failed: start interfering */
           newConnection.addInterfered(recv);
           recv.interfereAnyReception();
 
@@ -235,12 +241,10 @@ public class UDGM extends AbstractRadioMedium {
             }
           }
 
-        } else {
-          /* Success: radio starts receiving */
+        } else { /* Success: radio starts receiving */
           newConnection.addDestination(recv);
         }
-      } else if (distance <= moteInterferenceRange) {
-        /* Within interference range */
+      } else if (distance <= moteInterferenceRange) { /* Within interference range */
         newConnection.addInterfered(recv);
         recv.interfereAnyReception();
       }
@@ -248,7 +252,7 @@ public class UDGM extends AbstractRadioMedium {
 
     return newConnection;
   }
-  
+
   public double getSuccessProbability(Radio source, Radio dest) {
   	return getTxSuccessProbability(source) * getRxSuccessProbability(source, dest);
   }
@@ -258,7 +262,7 @@ public class UDGM extends AbstractRadioMedium {
   public double getRxSuccessProbability(Radio source, Radio dest) {
   	double distance = source.getPosition().getDistanceTo(dest.getPosition());
     double distanceSquared = Math.pow(distance,2.0);
-    double distanceMax = TRANSMITTING_RANGE * 
+    double distanceMax = TRANSMITTING_RANGE *
     ((double) source.getCurrentOutputPowerIndicator() / (double) source.getOutputPowerIndicatorMax());
     if (distanceMax == 0.0) {
       return 0.0;
@@ -271,9 +275,10 @@ public class UDGM extends AbstractRadioMedium {
     return 1.0 - ratio*(1.0-SUCCESS_RATIO_RX);
   }
 
+  @Override
   public void updateSignalStrengths() {
     /* Override: uses distance as signal strength factor */
-    
+
     /* Reset signal strengths */
     for (Radio radio : getRegisteredRadios()) {
       radio.setCurrentSignalStrength(SS_NOTHING);
@@ -340,6 +345,7 @@ public class UDGM extends AbstractRadioMedium {
     }
   }
 
+  @Override
   public Collection<Element> getConfigXML() {
     ArrayList<Element> config = new ArrayList<Element>();
     Element element;
@@ -367,6 +373,7 @@ public class UDGM extends AbstractRadioMedium {
     return config;
   }
 
+  @Override
   public boolean setConfigXML(Collection<Element> configXML, boolean visAvailable) {
     for (Element element : configXML) {
       if (element.getName().equals("transmitting_range")) {

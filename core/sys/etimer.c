@@ -70,7 +70,7 @@ update_time(void)
     tdist = t->timer.start + t->timer.interval - now;
     for(t = t->next; t != NULL; t = t->next) {
       if(t->timer.start + t->timer.interval - now < tdist) {
-	tdist = t->timer.start + t->timer.interval - now;
+        tdist = t->timer.start + t->timer.interval - now;
       }
     }
     next_expiration = now + tdist;
