@@ -108,12 +108,11 @@ data_packet_received(struct unicast_conn *uc, const rimeaddr_t *from)
 static const struct unicast_callbacks data_callbacks = { data_packet_received };
 /*---------------------------------------------------------------------------*/
 void
-multihop_open(struct multihop_conn *c, uint16_t channel,
-	const struct multihop_callbacks *callbacks)
+multihop_open(struct multihop_conn *c, uint16_t channel, const struct multihop_callbacks *callbacks)
 {
   unicast_open(&c->c, channel, &data_callbacks);
-  channel_set_attributes(channel, attributes);
   c->cb = callbacks;
+  channel_set_attributes(channel, attributes);
 }
 /*---------------------------------------------------------------------------*/
 void

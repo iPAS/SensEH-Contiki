@@ -51,8 +51,7 @@ channel_init(void)
 }
 /*---------------------------------------------------------------------------*/
 void
-channel_set_attributes(uint16_t channelno,
-		       const struct packetbuf_attrlist attrlist[])
+channel_set_attributes(uint16_t channelno, const struct packetbuf_attrlist attrlist[])
 {
   struct channel *c;
   c = channel_lookup(channelno);

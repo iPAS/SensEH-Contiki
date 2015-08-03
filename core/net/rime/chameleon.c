@@ -110,43 +110,45 @@ printhdr(uint8_t *hdr, int len)
 struct channel *
 chameleon_parse(void)
 {
-  struct channel *c = NULL;
-  PRINTF("%d.%d: chameleon_input\n",
-	 rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1]);
-#if DEBUG
-  printhdr(packetbuf_dataptr(), packetbuf_datalen());
-#endif /* DEBUG */
-  c = CHAMELEON_MODULE.input();
-  if(c != NULL) {
-    PRINTF("%d.%d: chameleon_input channel %d\n",
-           rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
-           c->channelno);
-    packetbuf_set_attr(PACKETBUF_ATTR_CHANNEL, c->channelno);
-  } else {
-    PRINTF("%d.%d: chameleon_input channel not found for incoming packet\n",
-           rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1]);
-  }
-  return c;
+    struct channel *c = NULL;
+
+    PRINTF("%d.%d: chameleon_input\n", rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1]);
+    #if DEBUG
+    printhdr(packetbuf_dataptr(), packetbuf_datalen());
+    #endif /* DEBUG */
+
+    c = CHAMELEON_MODULE.input();
+
+    if(c != NULL) {
+        PRINTF("%d.%d: chameleon_input channel %d\n",
+               rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1], c->channelno);
+        packetbuf_set_attr(PACKETBUF_ATTR_CHANNEL, c->channelno);
+    } else {
+        PRINTF("%d.%d: chameleon_input channel not found for incoming packet\n",
+               rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1]);
+    }
+
+    return c;
 }
 /*---------------------------------------------------------------------------*/
 int
 chameleon_create(struct channel *c)
 {
-  int ret;
+    int ret;
 
-  PRINTF("%d.%d: chameleon_output channel %d\n",
-	 rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
-	 c->channelno);
+    PRINTF("%d.%d: chameleon_output channel %d\n",
+           rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1], c->channelno);
 
-  ret = CHAMELEON_MODULE.output(c);
-  packetbuf_set_attr(PACKETBUF_ATTR_CHANNEL, c->channelno);
-#if DEBUG
-  printhdr(packetbuf_hdrptr(), packetbuf_hdrlen());
-#endif /* DEBUG */
-  if(ret) {
-    return 1;
-  }
-  return 0;
+    ret = CHAMELEON_MODULE.output(c);
+
+    packetbuf_set_attr(PACKETBUF_ATTR_CHANNEL, c->channelno);
+    #if DEBUG
+    printhdr(packetbuf_hdrptr(), packetbuf_hdrlen());
+    #endif /* DEBUG */
+    if (ret) {
+        return 1;
+    }
+    return 0;
 }
 /*---------------------------------------------------------------------------*/
 int

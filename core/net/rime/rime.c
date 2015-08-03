@@ -103,21 +103,21 @@ rime_sniffer_remove(struct rime_sniffer *s)
 static void
 input(void)
 {
-  struct rime_sniffer *s;
-  struct channel *c;
+    struct rime_sniffer *s;
+    struct channel *c;
 
-  RIMESTATS_ADD(rx);
-  c = chameleon_parse();
-  
-  for(s = list_head(sniffers); s != NULL; s = list_item_next(s)) {
-    if(s->input_callback != NULL) {
-      s->input_callback();
+    RIMESTATS_ADD(rx);
+    c = chameleon_parse();
+
+    for (s = list_head(sniffers); s != NULL; s = list_item_next(s)) {
+        if (s->input_callback != NULL) {
+            s->input_callback();
+        }
     }
-  }
-  
-  if(c != NULL) {
-    abc_input(c);
-  }
+
+    if (c != NULL) {
+        abc_input(c);
+    }
 }
 /*---------------------------------------------------------------------------*/
 static void

@@ -44,15 +44,28 @@ struct rimestats {
   unsigned long tx, rx;
 
   unsigned long reliabletx, reliablerx,
-    rexmit, acktx, noacktx, ackrx, timedout, badackrx;
+                rexmit,
+                acktx, noacktx,
+                ackrx, timedout, badackrx;
 
   /* Reasons for dropping incoming packets: */
   unsigned long toolong, tooshort, badsynch, badcrc;
 
   unsigned long contentiondrop, /* Packet dropped due to contention */
-    sendingdrop; /* Packet dropped when we were sending a packet */
+                sendingdrop; /* Packet dropped when we were sending a packet */
 
   unsigned long lltx, llrx;
+
+  /* iPAS: XMAC statistic */
+  unsigned long xmac_rx_all;
+  unsigned long xmac_rx_ok;
+  unsigned long xmac_rx_fail;
+  unsigned long xmac_rx_unicast; /* Received packets of us */
+  unsigned long xmac_rx_broadcast; /* Received packets of the other */
+  unsigned long xmac_rx_other; /* Received packets of the other */
+  unsigned long xmac_rx_strobe_unicast;
+  unsigned long xmac_rx_strobe_broadcast;
+  unsigned long xmac_rx_strobe_other;
 };
 
 #if RIMESTATS_CONF_ENABLED

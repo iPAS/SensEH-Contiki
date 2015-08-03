@@ -62,53 +62,52 @@ static const struct packetbuf_attrlist attributes[] =
 
 /*---------------------------------------------------------------------------*/
 void
-abc_open(struct abc_conn *c, uint16_t channelno,
-	  const struct abc_callbacks *callbacks)
+abc_open(struct abc_conn *c, uint16_t channelno, const struct abc_callbacks *callbacks)
 {
-  channel_open(&c->channel, channelno);
-  c->u = callbacks;
-  channel_set_attributes(channelno, attributes);
+    channel_open(&c->channel, channelno);
+    c->u = callbacks;
+    channel_set_attributes(channelno, attributes);
 }
 /*---------------------------------------------------------------------------*/
 void
 abc_close(struct abc_conn *c)
 {
-  channel_close(&c->channel);
+    channel_close(&c->channel);
 }
 /*---------------------------------------------------------------------------*/
 int
 abc_send(struct abc_conn *c)
 {
-  PRINTF("%d.%d: abc: abc_send on channel %d\n",
-	 rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
-	 c->channel.channelno);
-  return rime_output(&c->channel);
+    PRINTF("%d.%d: abc: abc_send on channel %d\n",
+           rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
+           c->channel.channelno);
+    return rime_output(&c->channel);
 }
 /*---------------------------------------------------------------------------*/
 void
 abc_input(struct channel *channel)
 {
-  struct abc_conn *c = (struct abc_conn *)channel;
-  PRINTF("%d.%d: abc: abc_input_packet on channel %d\n",
-	 rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
-	 channel->channelno);
+    struct abc_conn *c = (struct abc_conn *)channel;
+    PRINTF("%d.%d: abc: abc_input_packet on channel %d\n",
+           rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
+           channel->channelno);
 
-  if(c->u->recv) {
-    c->u->recv(c);
-  }
+    if (c->u->recv) {
+        c->u->recv(c);
+    }
 }
 /*---------------------------------------------------------------------------*/
 void
 abc_sent(struct channel *channel, int status, int num_tx)
 {
-  struct abc_conn *c = (struct abc_conn *)channel;
-  PRINTF("%d.%d: abc: abc_sent on channel %d\n",
-	 rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
-	 channel->channelno);
+    struct abc_conn *c = (struct abc_conn *)channel;
+    PRINTF("%d.%d: abc: abc_sent on channel %d\n",
+           rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
+           channel->channelno);
 
-  if(c->u->sent) {
-    c->u->sent(c, status, num_tx);
-  }
+    if (c->u->sent) {
+        c->u->sent(c, status, num_tx);
+    }
 }
 /*---------------------------------------------------------------------------*/
 

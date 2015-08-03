@@ -68,8 +68,9 @@ recv_from_abc(struct abc_conn *bc)
   rimeaddr_copy(&sender, packetbuf_addr(PACKETBUF_ADDR_SENDER));
   
   PRINTF("%d.%d: broadcast: from %d.%d\n",
-	 rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
-	 sender.u8[0], sender.u8[1]);
+         rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
+         sender.u8[0], sender.u8[1]);
+
   if(c->u->recv) {
     c->u->recv(c, &sender);
   }
@@ -81,10 +82,11 @@ sent_by_abc(struct abc_conn *bc, int status, int num_tx)
   struct broadcast_conn *c = (struct broadcast_conn *)bc;
 
   PRINTF("%d.%d: sent to %d.%d status %d num_tx %d\n",
-	 rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
-	 packetbuf_addr(PACKETBUF_ADDR_SENDER)->u8[0],
+         rimeaddr_node_addr.u8[0],rimeaddr_node_addr.u8[1],
+         packetbuf_addr(PACKETBUF_ADDR_SENDER)->u8[0],
          packetbuf_addr(PACKETBUF_ADDR_SENDER)->u8[1],
          status, num_tx);
+
   if(c->u->sent) {
     c->u->sent(c, status, num_tx);
   }
@@ -93,8 +95,7 @@ sent_by_abc(struct abc_conn *bc, int status, int num_tx)
 static const struct abc_callbacks broadcast = {recv_from_abc, sent_by_abc};
 /*---------------------------------------------------------------------------*/
 void
-broadcast_open(struct broadcast_conn *c, uint16_t channel,
-	  const struct broadcast_callbacks *u)
+broadcast_open(struct broadcast_conn *c, uint16_t channel, const struct broadcast_callbacks *u)
 {
   abc_open(&c->c, channel, &broadcast);
   c->u = u;
