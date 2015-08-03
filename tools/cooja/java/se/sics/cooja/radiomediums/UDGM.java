@@ -6,18 +6,18 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
+ * notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * notice, this list of conditions and the following disclaimer in the
+ * documentation and/or other materials provided with the distribution.
  * 3. Neither the name of the Institute nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
  * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
@@ -25,7 +25,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
 
 package se.sics.cooja.radiomediums;
@@ -80,129 +79,131 @@ import se.sics.cooja.plugins.skins.UDGMVisualizerSkin;
  */
 @ClassDescription("Unit Disk Graph Medium (UDGM): Distance Loss")
 public class UDGM extends AbstractRadioMedium {
-  private static Logger logger = Logger.getLogger(UDGM.class);
+    private static Logger logger = Logger.getLogger(UDGM.class);
 
-  public double SUCCESS_RATIO_TX = 1.0; /* Success ratio of TX. If this fails, no radios receive the packet */
-  public double SUCCESS_RATIO_RX = 1.0; /* Success ratio of RX. If this fails, the single affected receiver does not receive the packet */
-  public double TRANSMITTING_RANGE = 50; /* Transmission range. */
-  public double INTERFERENCE_RANGE = 100; /* Interference range. Ignored if below transmission range. */
+    public double SUCCESS_RATIO_TX   = 1.0; /* Success ratio of TX. If this fails, no radios receive the packet */
+    public double SUCCESS_RATIO_RX   = 1.0; /* Success ratio of RX. If this fails, the single affected receiver does not receive the packet */
+    public double TRANSMITTING_RANGE = 50;  /* Transmission range. */
+    public double INTERFERENCE_RANGE = 100; /* Interference range. Ignored if below transmission range. */
 
-  private DirectedGraphMedium dgrm; /* Used only for efficient destination lookup */
+    private DirectedGraphMedium dgrm;                     /* Used only for efficient destination lookup */
 
-  private Random random = null;
+    private Random random = null;
 
-  public UDGM(Simulation simulation) {
-    super(simulation);
-    random = simulation.getRandomGenerator();
-    dgrm = new DirectedGraphMedium() {
-      @Override
-      protected void analyzeEdges() {
-        /* Create edges according to distances.
-         * XXX May be slow for mobile networks */
-        clearEdges();
-        for (Radio source: UDGM.this.getRegisteredRadios()) {
-          Position sourcePos = source.getPosition();
-          for (Radio dest: UDGM.this.getRegisteredRadios()) {
-            Position destPos = dest.getPosition();
-            /* Ignore ourselves */
-            if (source == dest) {
-              continue;
+    public UDGM(Simulation simulation) {
+        super(simulation);
+        random = simulation.getRandomGenerator();
+        dgrm = new DirectedGraphMedium() {
+            @Override
+            protected void analyzeEdges() {
+                /* Create edges according to distances.
+                 * XXX May be slow for mobile networks */
+                clearEdges();
+                for (Radio source : UDGM.this.getRegisteredRadios()) {
+                    Position sourcePos = source.getPosition();
+                    for (Radio dest : UDGM.this.getRegisteredRadios()) {
+                        Position destPos = dest.getPosition();
+                        /* Ignore ourselves */
+                        if (source == dest) {
+                            continue;
+                        }
+                        double distance = sourcePos.getDistanceTo(destPos);
+                        if (distance < Math.max(TRANSMITTING_RANGE, INTERFERENCE_RANGE)) {
+                            /* Add potential destination */
+                            addEdge(new DirectedGraphMedium.Edge(source, new DGRMDestinationRadio(
+                                    dest)));
+                        }
+                    }
+                }
+                super.analyzeEdges();
             }
-            double distance = sourcePos.getDistanceTo(destPos);
-            if (distance < Math.max(TRANSMITTING_RANGE, INTERFERENCE_RANGE)) {
-              /* Add potential destination */
-              addEdge(
-                  new DirectedGraphMedium.Edge(source,
-                      new DGRMDestinationRadio(dest)));
+        };
+
+        /* Register as position observer.
+         * If any positions change, re-analyze potential receivers. */
+        final Observer positionObserver = new Observer() {
+            @Override
+            public void update(Observable o, Object arg) {
+                dgrm.requestEdgeAnalysis();
             }
-          }
+        };
+
+        /* Re-analyze potential receivers if radios are added/removed. */
+        simulation.getEventCentral().addMoteCountListener(new MoteCountListener() {
+            @Override
+            public void moteWasAdded(Mote mote) {
+                mote.getInterfaces().getPosition().addObserver(positionObserver);
+                dgrm.requestEdgeAnalysis();
+            }
+
+            @Override
+            public void moteWasRemoved(Mote mote) {
+                mote.getInterfaces().getPosition().deleteObserver(positionObserver);
+                dgrm.requestEdgeAnalysis();
+            }
+        });
+
+        for (Mote mote : simulation.getMotes()) {
+            mote.getInterfaces().getPosition().addObserver(positionObserver);
         }
-        super.analyzeEdges();
-      }
-    };
-
-    /* Register as position observer.
-     * If any positions change, re-analyze potential receivers. */
-    final Observer positionObserver = new Observer() {
-      @Override
-      public void update(Observable o, Object arg) {
         dgrm.requestEdgeAnalysis();
-      }
-    };
-    /* Re-analyze potential receivers if radios are added/removed. */
-    simulation.getEventCentral().addMoteCountListener(new MoteCountListener() {
-      @Override
-      public void moteWasAdded(Mote mote) {
-        mote.getInterfaces().getPosition().addObserver(positionObserver);
-        dgrm.requestEdgeAnalysis();
-      }
-      @Override
-      public void moteWasRemoved(Mote mote) {
-        mote.getInterfaces().getPosition().deleteObserver(positionObserver);
-        dgrm.requestEdgeAnalysis();
-      }
-    });
-    for (Mote mote: simulation.getMotes()) {
-      mote.getInterfaces().getPosition().addObserver(positionObserver);
-    }
-    dgrm.requestEdgeAnalysis();
 
-    /* Register visualizer skin */
-    Visualizer.registerVisualizerSkin(UDGMVisualizerSkin.class);
-  }
-
-  @Override
-  public void removed() {
-  	super.removed();
-
-		Visualizer.unregisterVisualizerSkin(UDGMVisualizerSkin.class);
-  }
-
-  public void setTxRange(double r) {
-    TRANSMITTING_RANGE = r;
-    dgrm.requestEdgeAnalysis();
-  }
-
-  public void setInterferenceRange(double r) {
-    INTERFERENCE_RANGE = r;
-    dgrm.requestEdgeAnalysis();
-  }
-
-  @Override
-  public RadioConnection createConnections(Radio sender) {
-    RadioConnection newConnection = new RadioConnection(sender);
-
-    /* Fail radio transmission randomly - no radios will hear this transmission */
-    if (getTxSuccessProbability(sender) < 1.0 && random.nextDouble() > getTxSuccessProbability(sender)) {
-      return newConnection;
+        /* Register visualizer skin */
+        Visualizer.registerVisualizerSkin(UDGMVisualizerSkin.class);
     }
 
-    /* Calculate ranges: grows with radio output power */
-    double moteTransmissionRange = TRANSMITTING_RANGE *
-        ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
-    double moteInterferenceRange = INTERFERENCE_RANGE *
-        ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
+    @Override
+    public void removed() {
+        super.removed();
 
-    /* Get all potential destination radios */
-    DestinationRadio[] potentialDestinations = dgrm.getPotentialDestinations(sender);
-    if (potentialDestinations == null) {
-      return newConnection;
+        Visualizer.unregisterVisualizerSkin(UDGMVisualizerSkin.class);
     }
 
-    /* Loop through all potential destinations */
-    Position senderPos = sender.getPosition();
-    for (DestinationRadio dest: potentialDestinations) {
-      Radio recv = dest.radio;
+    public void setTxRange(double r) {
+        TRANSMITTING_RANGE = r;
+        dgrm.requestEdgeAnalysis();
+    }
 
-      /* Fail if radios are on different (but configured) channels */
-      if (sender.getChannel() >= 0 &&
-          recv.getChannel() >= 0 &&
-          sender.getChannel() != recv.getChannel()) {
-        continue;
-      }
-      Position recvPos = recv.getPosition();
+    public void setInterferenceRange(double r) {
+        INTERFERENCE_RANGE = r;
+        dgrm.requestEdgeAnalysis();
+    }
 
-      /* Fail if radio is turned off */
+    @Override
+    public RadioConnection createConnections(Radio sender) {
+        RadioConnection newConnection = new RadioConnection(sender);
+
+        /* Fail radio transmission randomly - no radios will hear this transmission */
+        if (getTxSuccessProbability(sender) < 1.0
+            && random.nextDouble() > getTxSuccessProbability(sender)) {
+            return newConnection;
+        }
+
+        /* Calculate ranges: grows with radio output power */
+        double moteTransmissionRange = TRANSMITTING_RANGE *
+                ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
+        double moteInterferenceRange = INTERFERENCE_RANGE *
+                ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
+
+        /* Get all potential destination radios */
+        DestinationRadio[] potentialDestinations = dgrm.getPotentialDestinations(sender);
+        if (potentialDestinations == null) {
+            return newConnection;
+        }
+
+        /* Loop through all potential destinations */
+        Position senderPos = sender.getPosition();
+        for (DestinationRadio dest : potentialDestinations) {
+            Radio recv = dest.radio;
+
+            /* Fail if radios are on different (but configured) channels */
+            if (sender.getChannel() >= 0 && recv.getChannel() >= 0
+                && sender.getChannel() != recv.getChannel()) {
+                continue;
+            }
+            Position recvPos = recv.getPosition();
+
+            /* Fail if radio is turned off */
 //      if (!recv.isReceiverOn()) {
 //        /* Special case: allow connection if source is Contiki radio,
 //         * and destination is something else (byte radio).
@@ -216,189 +217,196 @@ public class UDGM extends AbstractRadioMedium {
 //        }
 //      }
 
-      double distance = senderPos.getDistanceTo(recvPos);
-      if (distance <= moteTransmissionRange) { /* Within transmission range */
+            double distance = senderPos.getDistanceTo(recvPos);
+            if (distance <= moteTransmissionRange) { /* Within transmission range */
 
-        if (!recv.isRadioOn()) {
-          newConnection.addInterfered(recv);
-          recv.interfereAnyReception();
+                if (!recv.isRadioOn()) {
+                    newConnection.addInterfered(recv);
+                    recv.interfereAnyReception();
 
-        } else if (recv.isInterfered()) { /* Was interfered: keep interfering */
-          newConnection.addInterfered(recv);
+                } else
+                if (recv.isInterfered()) { /* Was interfered: keep interfering */
+                    newConnection.addInterfered(recv);
 
-        } else if (recv.isTransmitting()) {
-          newConnection.addInterfered(recv);
+                } else
+                if (recv.isTransmitting()) {
+                    newConnection.addInterfered(recv);
 
-        } else if (recv.isReceiving() || /* Was receiving, or reception failed: start interfering */
-            (random.nextDouble() > getRxSuccessProbability(sender, recv))) {
-          newConnection.addInterfered(recv);
-          recv.interfereAnyReception();
+                } else
+                if (recv.isReceiving() || /* Was receiving, or reception failed: start interfering */
+                (random.nextDouble() > getRxSuccessProbability(sender, recv))) {
+                    newConnection.addInterfered(recv);
+                    recv.interfereAnyReception();
 
-          /* Interfere receiver in all other active radio connections */
-          for (RadioConnection conn : getActiveConnections()) {
-            if (conn.isDestination(recv)) {
-              conn.addInterfered(recv);
+                    /* Interfere receiver in all other active radio connections */
+                    for (RadioConnection conn : getActiveConnections()) {
+                        if (conn.isDestination(recv)) {
+                            conn.addInterfered(recv);
+                        }
+                    }
+
+                } else { /* Success: radio starts receiving */
+                    newConnection.addDestination(recv);
+                }
+            } else if (distance <= moteInterferenceRange) { /* Within interference range */
+                newConnection.addInterfered(recv);
+                recv.interfereAnyReception();
             }
-          }
 
-        } else { /* Success: radio starts receiving */
-          newConnection.addDestination(recv);
+        } /* (DestinationRadio dest : potentialDestinations) */
+
+        return newConnection;
+    }
+
+    public double getSuccessProbability(Radio source, Radio dest) {
+        return getTxSuccessProbability(source) * getRxSuccessProbability(source, dest);
+    }
+
+    public double getTxSuccessProbability(Radio source) {
+        return SUCCESS_RATIO_TX;
+    }
+
+    public double getRxSuccessProbability(Radio source, Radio dest) {
+        double distance = source.getPosition().getDistanceTo(dest.getPosition());
+        double distanceSquared = Math.pow(distance, 2.0);
+        double distanceMax = TRANSMITTING_RANGE *
+                ((double) source.getCurrentOutputPowerIndicator() /
+                 (double) source.getOutputPowerIndicatorMax());
+        if (distanceMax == 0.0) {
+            return 0.0;
         }
-      } else if (distance <= moteInterferenceRange) { /* Within interference range */
-        newConnection.addInterfered(recv);
-        recv.interfereAnyReception();
-      }
+        double distanceMaxSquared = Math.pow(distanceMax, 2.0);
+        double ratio = distanceSquared / distanceMaxSquared;
+        if (ratio > 1.0) {
+            return 0.0;
+        }
+        return 1.0 - ratio * (1.0 - SUCCESS_RATIO_RX);
     }
 
-    return newConnection;
-  }
+    @Override
+    public void updateSignalStrengths() {
+        /* Override: uses distance as signal strength factor */
 
-  public double getSuccessProbability(Radio source, Radio dest) {
-  	return getTxSuccessProbability(source) * getRxSuccessProbability(source, dest);
-  }
-  public double getTxSuccessProbability(Radio source) {
-    return SUCCESS_RATIO_TX;
-  }
-  public double getRxSuccessProbability(Radio source, Radio dest) {
-  	double distance = source.getPosition().getDistanceTo(dest.getPosition());
-    double distanceSquared = Math.pow(distance,2.0);
-    double distanceMax = TRANSMITTING_RANGE *
-    ((double) source.getCurrentOutputPowerIndicator() / (double) source.getOutputPowerIndicatorMax());
-    if (distanceMax == 0.0) {
-      return 0.0;
-    }
-    double distanceMaxSquared = Math.pow(distanceMax,2.0);
-    double ratio = distanceSquared / distanceMaxSquared;
-    if (ratio > 1.0) {
-    	return 0.0;
-    }
-    return 1.0 - ratio*(1.0-SUCCESS_RATIO_RX);
-  }
-
-  @Override
-  public void updateSignalStrengths() {
-    /* Override: uses distance as signal strength factor */
-
-    /* Reset signal strengths */
-    for (Radio radio : getRegisteredRadios()) {
-      radio.setCurrentSignalStrength(SS_NOTHING);
-    }
-
-    /* Set signal strength to below strong on destinations */
-    RadioConnection[] conns = getActiveConnections();
-    for (RadioConnection conn : conns) {
-      if (conn.getSource().getCurrentSignalStrength() < SS_STRONG) {
-        conn.getSource().setCurrentSignalStrength(SS_STRONG);
-      }
-      for (Radio dstRadio : conn.getDestinations()) {
-        if (conn.getSource().getChannel() >= 0 &&
-            dstRadio.getChannel() >= 0 &&
-            conn.getSource().getChannel() != dstRadio.getChannel()) {
-          continue;
+        /* Reset signal strengths */
+        for (Radio radio : getRegisteredRadios()) {
+            radio.setCurrentSignalStrength(SS_NOTHING);
         }
 
-        double dist = conn.getSource().getPosition().getDistanceTo(dstRadio.getPosition());
+        /* Set signal strength to below strong on destinations */
+        RadioConnection[] conns = getActiveConnections();
+        for (RadioConnection conn : conns) {
+            if (conn.getSource().getCurrentSignalStrength() < SS_STRONG) {
+                conn.getSource().setCurrentSignalStrength(SS_STRONG);
+            }
+            for (Radio dstRadio : conn.getDestinations()) {
+                if (conn.getSource().getChannel() >= 0 && dstRadio.getChannel() >= 0
+                    && conn.getSource().getChannel() != dstRadio.getChannel()) {
+                    continue;
+                }
 
-        double maxTxDist = TRANSMITTING_RANGE
-        * ((double) conn.getSource().getCurrentOutputPowerIndicator() / (double) conn.getSource().getOutputPowerIndicatorMax());
-        double distFactor = dist/maxTxDist;
+                double dist = conn.getSource().getPosition().getDistanceTo(dstRadio.getPosition());
 
-        double signalStrength = SS_STRONG + distFactor*(SS_WEAK - SS_STRONG);
-        if (dstRadio.getCurrentSignalStrength() < signalStrength) {
-          dstRadio.setCurrentSignalStrength(signalStrength);
+                double maxTxDist = TRANSMITTING_RANGE *
+                        ((double) conn.getSource().getCurrentOutputPowerIndicator() /
+                         (double) conn.getSource().getOutputPowerIndicatorMax());
+                double distFactor = dist / maxTxDist;
+
+                double signalStrength = SS_STRONG + distFactor * (SS_WEAK - SS_STRONG);
+                if (dstRadio.getCurrentSignalStrength() < signalStrength) {
+                    dstRadio.setCurrentSignalStrength(signalStrength);
+                }
+            }
         }
-      }
+
+        /* Set signal strength to below weak on interfered */
+        for (RadioConnection conn : conns) {
+            for (Radio intfRadio : conn.getInterfered()) {
+                if (conn.getSource().getChannel() >= 0 && intfRadio.getChannel() >= 0
+                    && conn.getSource().getChannel() != intfRadio.getChannel()) {
+                    continue;
+                }
+
+                double dist = conn.getSource().getPosition().getDistanceTo(intfRadio.getPosition());
+
+                double maxTxDist = TRANSMITTING_RANGE *
+                        ((double) conn.getSource().getCurrentOutputPowerIndicator() /
+                         (double) conn.getSource().getOutputPowerIndicatorMax());
+                double distFactor = dist / maxTxDist;
+
+                if (distFactor < 1) {
+                    double signalStrength = SS_STRONG + distFactor * (SS_WEAK - SS_STRONG);
+                    if (intfRadio.getCurrentSignalStrength() < signalStrength) {
+                        intfRadio.setCurrentSignalStrength(signalStrength);
+                    }
+                } else {
+                    intfRadio.setCurrentSignalStrength(SS_WEAK);
+                    if (intfRadio.getCurrentSignalStrength() < SS_WEAK) {
+                        intfRadio.setCurrentSignalStrength(SS_WEAK);
+                    }
+                }
+
+                if (!intfRadio.isInterfered()) {
+                    /*logger.warn("Radio was not interfered: " + intfRadio);*/
+                    intfRadio.interfereAnyReception();
+                }
+            }
+        }
     }
 
-    /* Set signal strength to below weak on interfered */
-    for (RadioConnection conn : conns) {
-      for (Radio intfRadio : conn.getInterfered()) {
-        if (conn.getSource().getChannel() >= 0 &&
-            intfRadio.getChannel() >= 0 &&
-            conn.getSource().getChannel() != intfRadio.getChannel()) {
-          continue;
-        }
+    @Override
+    public Collection<Element> getConfigXML() {
+        ArrayList<Element> config = new ArrayList<Element>();
+        Element element;
 
-        double dist = conn.getSource().getPosition().getDistanceTo(intfRadio.getPosition());
+        /* Transmitting range */
+        element = new Element("transmitting_range");
+        element.setText(Double.toString(TRANSMITTING_RANGE));
+        config.add(element);
 
-        double maxTxDist = TRANSMITTING_RANGE
-        * ((double) conn.getSource().getCurrentOutputPowerIndicator() / (double) conn.getSource().getOutputPowerIndicatorMax());
-        double distFactor = dist/maxTxDist;
+        /* Interference range */
+        element = new Element("interference_range");
+        element.setText(Double.toString(INTERFERENCE_RANGE));
+        config.add(element);
 
-        if (distFactor < 1) {
-          double signalStrength = SS_STRONG + distFactor*(SS_WEAK - SS_STRONG);
-          if (intfRadio.getCurrentSignalStrength() < signalStrength) {
-            intfRadio.setCurrentSignalStrength(signalStrength);
-          }
-        } else {
-          intfRadio.setCurrentSignalStrength(SS_WEAK);
-          if (intfRadio.getCurrentSignalStrength() < SS_WEAK) {
-            intfRadio.setCurrentSignalStrength(SS_WEAK);
-          }
-        }
+        /* Transmission success probability */
+        element = new Element("success_ratio_tx");
+        element.setText("" + SUCCESS_RATIO_TX);
+        config.add(element);
 
-        if (!intfRadio.isInterfered()) {
-          /*logger.warn("Radio was not interfered: " + intfRadio);*/
-          intfRadio.interfereAnyReception();
-        }
-      }
+        /* Reception success probability */
+        element = new Element("success_ratio_rx");
+        element.setText("" + SUCCESS_RATIO_RX);
+        config.add(element);
+
+        return config;
     }
-  }
 
-  @Override
-  public Collection<Element> getConfigXML() {
-    ArrayList<Element> config = new ArrayList<Element>();
-    Element element;
+    @Override
+    public boolean setConfigXML(Collection<Element> configXML, boolean visAvailable) {
+        for (Element element : configXML) {
+            if (element.getName().equals("transmitting_range")) {
+                TRANSMITTING_RANGE = Double.parseDouble(element.getText());
+            }
 
-    /* Transmitting range */
-    element = new Element("transmitting_range");
-    element.setText(Double.toString(TRANSMITTING_RANGE));
-    config.add(element);
+            if (element.getName().equals("interference_range")) {
+                INTERFERENCE_RANGE = Double.parseDouble(element.getText());
+            }
 
-    /* Interference range */
-    element = new Element("interference_range");
-    element.setText(Double.toString(INTERFERENCE_RANGE));
-    config.add(element);
+            /* Backwards compatibility */
+            if (element.getName().equals("success_ratio")) {
+                SUCCESS_RATIO_TX = Double.parseDouble(element.getText());
+                logger.warn("Loading old Cooja Config, XML element \"sucess_ratio\" parsed at \"sucess_ratio_tx\"");
+            }
 
-    /* Transmission success probability */
-    element = new Element("success_ratio_tx");
-    element.setText("" + SUCCESS_RATIO_TX);
-    config.add(element);
+            if (element.getName().equals("success_ratio_tx")) {
+                SUCCESS_RATIO_TX = Double.parseDouble(element.getText());
+            }
 
-    /* Reception success probability */
-    element = new Element("success_ratio_rx");
-    element.setText("" + SUCCESS_RATIO_RX);
-    config.add(element);
-
-    return config;
-  }
-
-  @Override
-  public boolean setConfigXML(Collection<Element> configXML, boolean visAvailable) {
-    for (Element element : configXML) {
-      if (element.getName().equals("transmitting_range")) {
-        TRANSMITTING_RANGE = Double.parseDouble(element.getText());
-      }
-
-      if (element.getName().equals("interference_range")) {
-        INTERFERENCE_RANGE = Double.parseDouble(element.getText());
-      }
-
-      /* Backwards compatibility */
-      if (element.getName().equals("success_ratio")) {
-        SUCCESS_RATIO_TX = Double.parseDouble(element.getText());
-        logger.warn("Loading old Cooja Config, XML element \"sucess_ratio\" parsed at \"sucess_ratio_tx\"");
-      }
-
-      if (element.getName().equals("success_ratio_tx")) {
-        SUCCESS_RATIO_TX = Double.parseDouble(element.getText());
-      }
-
-      if (element.getName().equals("success_ratio_rx")) {
-        SUCCESS_RATIO_RX = Double.parseDouble(element.getText());
-      }
+            if (element.getName().equals("success_ratio_rx")) {
+                SUCCESS_RATIO_RX = Double.parseDouble(element.getText());
+            }
+        }
+        return true;
     }
-    return true;
-  }
 
 }
