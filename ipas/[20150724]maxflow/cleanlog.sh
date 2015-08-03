@@ -1,3 +1,5 @@
 #!/bin/bash
 
-rm -f result/*.{log,testlog,simlog}
+rm -f *.{log,testlog,simlog}
+
+[[ "$1" == "-a" ]] && rm -f result/*.{log,testlog,simlog}

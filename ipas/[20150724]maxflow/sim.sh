@@ -1,6 +1,4 @@
 #!/bin/bash 
-shopt -s extglob # for pattern of 'case'
-
 source config.sh
 
 ## ----------------------------------------------------------------------------
@@ -9,10 +7,27 @@ source config.sh
 DATE=$(date +'%Y%m%d')
 TIME=$(date +'%H%M')
 
+[[ ! -f "$1" ]] && echo "CSC file does not exist!" && exit 255
+csc_file=$1
 
-time sim flow_multihop_diamond.csc
-mv COOJA.log result/${DATE}_${TIME}.log
-mv COOJA.testlog result/${DATE}_${TIME}.testlog
+re='^[0-9]+$'
+if [[ $2 =~ $re && $3 =~ $re ]]; then
+	sending_period=$2 
+	sending_count=$3
+	log_name=${csc_file}_period=${sending_period}_count=${sending_count}_${DATE}_${TIME}
+
+	echo ${log_name}
+	exit
+
+else
+	log_name=${csc_file}_${DATE}_${TIME}
+fi
+
+sim_file=${csc_file}
+
+time sim "${sim_file}"
+mv COOJA.log result/"${log_name}".log
+mv COOJA.testlog result/"${log_name}".testlog
 
 exit
 
@@ -22,6 +37,7 @@ exit
 
 
 
+shopt -s extglob # for pattern of 'case'
 
 
 

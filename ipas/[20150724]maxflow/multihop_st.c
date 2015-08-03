@@ -57,10 +57,20 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #define DEBUG 1
 #if DEBUG
+#define LEDS_ON(x) leds_on(x)
+#define LEDS_OFF(x) leds_off(x)
+#define LEDS_TOGGLE(x) leds_toggle(x)
 #define PRINTF(...) printf(__VA_ARGS__)
 #else
+#undef LEDS_ON
+#undef LEDS_OFF
+#undef LEDS_TOGGLE
+#define LEDS_ON(x)
+#define LEDS_OFF(x)
+#define LEDS_TOGGLE(x)
 #define PRINTF(...)
 #endif
 
@@ -85,11 +95,80 @@ MEMB(neighbor_mem, struct neighbor, MAX_NEIGHBORS); // Declare memory block for 
 
 static struct announcement greeting_announcement;
 
+#define FLASH_LEDS LEDS_YELLOW
+#define FLASH_TIMEOUT (1)
+static struct ctimer flash_ctimer;
+
+
+static struct multihop_conn conn;
+/**
+ * Connection structure:
+ *
+
+    struct multihop_conn {
+
+        struct unicast_conn {
+
+            struct broadcast_conn {
+
+                struct abc_conn {
+
+                    struct channel {
+
+                        struct channel *next;
+                        uint16_t channelno;
+                        const struct packetbuf_attrlist *attrlist;
+                        uint8_t hdrsize;
+
+                    } channel;
+
+                    const struct abc_callbacks *u;
+
+                } c;
+
+                const struct broadcast_callbacks *u;
+
+            } c;
+
+            unsigned long ovh_count;
+            const struct unicast_callbacks *u;
+
+        } c;
+
+        const struct multihop_callbacks *cb;
+
+    };
+
+ */
+
+
+/** ---------------------------------------------------------------------------
+ * Turn off LED
+ */
+#if DEBUG
+static void
+turn_off_flash(void *p) {
+    LEDS_OFF(FLASH_LEDS);
+}
+#endif
+
+/** ---------------------------------------------------------------------------
+ * Turn on LED
+ */
+#if DEBUG
+static void
+turn_on_flash(void) {
+    LEDS_ON(FLASH_LEDS);
+    ctimer_set(&flash_ctimer, FLASH_TIMEOUT, turn_off_flash, NULL);
+}
+#endif
+
 /** ---------------------------------------------------------------------------
  * This function is called by the ctimer presented in each neighbor table entry.
  * The neighbor whose time is up has to be removed from the table.
  */
-static void remove_neighbor(void *neighbor) {
+static void
+remove_neighbor(void *neighbor) {
     struct neighbor *n = neighbor;
     PRINTF("%d.%d: losing %d.%d\n",
             rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1], n->addr.u8[0], n->addr.u8[1]);
@@ -100,7 +179,8 @@ static void remove_neighbor(void *neighbor) {
 /** ---------------------------------------------------------------------------
  * Find neighbor by address
  */
-static struct neighbor * find_neighbor(const rimeaddr_t *addr) {
+static struct neighbor *
+find_neighbor(const rimeaddr_t *addr) {
     struct neighbor *n;
     for (n = list_head(neighbor_table); n != NULL; n = list_item_next(n))
         if (rimeaddr_cmp(addr, &n->addr))
@@ -111,7 +191,8 @@ static struct neighbor * find_neighbor(const rimeaddr_t *addr) {
 /** ---------------------------------------------------------------------------
  * Add new neighbor by address
  */
-static struct neighbor * add_neighbor(const rimeaddr_t *addr) {
+static struct neighbor *
+add_neighbor(const rimeaddr_t *addr) {
     struct neighbor *n;
     n = memb_alloc(&neighbor_mem);
     if (n != NULL) {
@@ -127,7 +208,8 @@ static struct neighbor * add_neighbor(const rimeaddr_t *addr) {
 /** ---------------------------------------------------------------------------
  * Reset neighbor data
  */
-static void reset_neighbor(struct neighbor *n) {
+static void
+reset_neighbor(struct neighbor *n) {
     n->sent_packet_count = 0;
     n->recv_packet_count = 0;
     ctimer_restart(&n->keep_alive_timer);
@@ -136,7 +218,8 @@ static void reset_neighbor(struct neighbor *n) {
 /** ---------------------------------------------------------------------------
  * Count total number of in-flow packets
  */
-static uint32_t total_incoming_packet(void) {
+static uint32_t
+total_incoming_packet(void) {
     uint32_t total = 0;
     struct neighbor *n;
          for (n = list_head(neighbor_table); n != NULL; n = list_item_next(n))
@@ -147,7 +230,8 @@ static uint32_t total_incoming_packet(void) {
 /** ---------------------------------------------------------------------------
  * Count total number of out-flow packets
  */
-static uint32_t total_outgoing_packet(void) {
+static uint32_t
+total_outgoing_packet(void) {
     uint32_t total = 0;
     struct neighbor *n;
     for (n = list_head(neighbor_table); n != NULL; n = list_item_next(n))
@@ -160,7 +244,8 @@ static uint32_t total_outgoing_packet(void) {
  * The function checks the neighbor table to see if the neighbor is already presented in the list.
  * But, if it's not, a new entry is allocated and is added to the table.
  */
-static void received_announcement(
+static void
+received_announcement(
         struct announcement *a, const rimeaddr_t *from, uint16_t id, uint16_t value) {
     PRINTF("%d.%d: announced from %d.%d, id:%d value:%d\n",
             rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1], from->u8[0], from->u8[1], id, value);
@@ -185,8 +270,8 @@ static void received_announcement(
 /** ---------------------------------------------------------------------------
  * This function is called at the final recepient of the message.
  */
-static void recv(
-        struct multihop_conn *c, const rimeaddr_t *sender, const rimeaddr_t *prevhop, uint8_t hops) {
+static void
+recv(struct multihop_conn *c, const rimeaddr_t *sender, const rimeaddr_t *prevhop, uint8_t hops) {
     struct neighbor *n = find_neighbor(prevhop);
     if (n != NULL) {
         n->recv_packet_count++;
@@ -204,14 +289,23 @@ static void recv(
  * The function picks a random neighbor from the neighbor list and returns its address.
  * The picked one MUST not be the previous node.
  */
-static struct neighbor * select_friend_randomly_wisely(
+static struct neighbor *
+select_friend_randomly_wisely(
         const rimeaddr_t *originator, const rimeaddr_t *dest, const rimeaddr_t *prevhop) {
     uint8_t len = list_length(neighbor_table);
     struct neighbor *n = NULL;
 
-    if (len == 1) { // Sometime, an announcement comes after a forwarded packet
-        n = list_head(neighbor_table);
+    /* If we have already known the destination */
+    for (n = list_head(neighbor_table); n != NULL; n = list_item_next(n))
         if (rimeaddr_cmp(&n->addr, dest))
+            return n;
+
+    /* Whom would be sent ? */
+    if (len == 1) {
+        n = list_head(neighbor_table);
+        if (rimeaddr_cmp(&n->addr, prevhop))
+            return NULL; // Drop
+        else
             return n;
     } else
     if(len >= 2) {
@@ -234,14 +328,18 @@ static struct neighbor * select_friend_randomly_wisely(
  * If no neighbor is found, the function returns NULL to signal to the multihop layer
  * that the packet should be dropped.
  */
-static rimeaddr_t * forward(
-        struct multihop_conn *c, const rimeaddr_t *originator, const rimeaddr_t *dest,
+static rimeaddr_t *
+forward(struct multihop_conn *c, const rimeaddr_t *originator, const rimeaddr_t *dest,
         const rimeaddr_t *prevhop, uint8_t hops) {
+
+    turn_on_flash();
     struct neighbor *n = find_neighbor(prevhop);
-    if (n == NULL)
-        n = add_neighbor(prevhop); // Create new one if not exist
-    n->recv_packet_count++;
-    ctimer_restart(&n->keep_alive_timer); // Make it be still alive
+
+    /* I've already known you */
+    if (n != NULL) {
+        n->recv_packet_count++;
+        ctimer_restart(&n->keep_alive_timer); // Make it be still alive
+    }
 
     /* Find a neighbor to forward the message through. */
     if (list_length(neighbor_table) > 0) {
@@ -287,21 +385,43 @@ PROCESS_THREAD(stat_command_process, ev, data) {
         do_reset = true;
 
     struct neighbor *n;
-    char str1[12], str2[200];
+    char str1[20], str2[200];
     int i=0;
-    sprintf(str1, "%d.%d: stat", rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1]);
+    sprintf(str1, "%d.%d: stat=i/o;d ", rimeaddr_node_addr.u8[0], rimeaddr_node_addr.u8[1]);
 
     strcpy(str2, " NO neighbor");
     for (n = list_head(neighbor_table); n != NULL; n = list_item_next(n)) {
         i += sprintf(&str2[i], " %d.%d=%lu/%lu,",
                 n->addr.u8[0], n->addr.u8[1], n->recv_packet_count, n->sent_packet_count);
-        if (do_reset)
-            reset_neighbor(n);
     }
 
-    //if (i > 0) str2[--i] = '\0';
-    i += sprintf(&str2[i], " (%lu/%lu)", total_incoming_packet(), total_outgoing_packet());
+    i += sprintf(&str2[i], " total=%lu/%lu,",
+                 total_incoming_packet(), total_outgoing_packet()); // our multihop_st
+    i += sprintf(&str2[i], " cc2420=%lu/%lu;%lu, xmac=%lu/%lu;%lu,",
+                 RIMESTATS_GET(llrx), RIMESTATS_GET(lltx), RIMESTATS_GET(contentiondrop), // cc2420.c
+                 RIMESTATS_GET(rx),   RIMESTATS_GET(tx),   RIMESTATS_GET(sendingdrop)); // xmac.c
+    i += sprintf(&str2[i],
+                 " xmac_input[,"
+                 " all=%lu, ok=%lu, fail=%lu,"
+                 " uc=%lu, bc=%lu, oth=%lu,"    // Regular packet: unicast, broadcast, and others
+                 " suc=%lu, sbc=%lu, soth=%lu," // Strobe: ...
+                 " ],",
+                 RIMESTATS_GET(xmac_rx_all), RIMESTATS_GET(xmac_rx_ok), RIMESTATS_GET(xmac_rx_fail),
+                 RIMESTATS_GET(xmac_rx_unicast), RIMESTATS_GET(xmac_rx_broadcast),
+                 RIMESTATS_GET(xmac_rx_other),
+                 RIMESTATS_GET(xmac_rx_strobe_unicast), RIMESTATS_GET(xmac_rx_strobe_broadcast),
+                 RIMESTATS_GET(xmac_rx_strobe_other));
+
+    if (i > 0) str2[--i] = '\0';
     shell_output_str(&stat_command, str1, str2);
+
+    /* Clear old statistic */
+    if (do_reset) {
+        for (n = list_head(neighbor_table); n != NULL; n = list_item_next(n))
+            reset_neighbor(n);
+
+        bzero(&rimestats, sizeof(struct rimestats));
+    }
 
     PROCESS_END();
 }
@@ -310,7 +430,6 @@ PROCESS_THREAD(stat_command_process, ev, data) {
  * Main process.
  */
 static const struct multihop_callbacks callbacks = { recv, forward };
-static struct multihop_conn conn;
 
 PROCESS(multihop_process, "Multihop Flow S-T");
 AUTOSTART_PROCESSES(&multihop_process);
@@ -318,6 +437,8 @@ AUTOSTART_PROCESSES(&multihop_process);
 PROCESS_THREAD(multihop_process, ev, data) {
     PROCESS_EXITHANDLER(multihop_close(&conn));
     PROCESS_BEGIN();
+
+    LEDS_OFF(LEDS_ALL);
 
     serial_shell_init();
     shell_register_command(&stat_command);

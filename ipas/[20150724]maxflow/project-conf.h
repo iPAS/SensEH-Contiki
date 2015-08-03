@@ -56,9 +56,15 @@
    should optimize for the phase of neighbors. The phase optimization
    may reduce power consumption but is not compatible with all timer
    settings and is therefore off by default. */
-#define CONTIKIMAC_CONF_WITH_PHASE_OPTIMIZATION 0
+//#define CONTIKIMAC_CONF_WITH_PHASE_OPTIMIZATION 0  // This's for ContikiMAC
 
+
+//#define WITH_ENCOUNTER_OPTIMIZATION 1 // Enabled by default
 //#undef  XMAC_CONF_ANNOUNCEMENTS
-//#define XMAC_CONF_ANNOUNCEMENTS 1
+//#define XMAC_CONF_ANNOUNCEMENTS 1 // Keep recurrent announcement, not just at the beginning.
+//#define XMAC_CONF_COMPOWER 1 // Enabled by default
+
+
+#define RIMESTATS_CONF_ENABLED 1
 
 #endif // __PROJECT_CONF_H__

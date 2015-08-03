@@ -67,7 +67,7 @@
       <interface_config>
         se.sics.cooja.interfaces.Position
         <x>75.0</x>
-        <y>60.0</y>
+        <y>40.0</y>
         <z>0.0</z>
       </interface_config>
       <interface_config>
@@ -85,7 +85,7 @@
       <interface_config>
         se.sics.cooja.interfaces.Position
         <x>75.0</x>
-        <y>-60.0</y>
+        <y>-40.0</y>
         <z>0.0</z>
       </interface_config>
       <interface_config>
@@ -120,7 +120,7 @@
   <plugin>
     se.sics.cooja.plugins.SimControl
     <width>280</width>
-    <z>4</z>
+    <z>2</z>
     <height>151</height>
     <location_x>1</location_x>
     <location_y>375</location_y>
@@ -137,7 +137,7 @@
       <hidden />
     </plugin_config>
     <width>281</width>
-    <z>2</z>
+    <z>1</z>
     <height>273</height>
     <location_x>1</location_x>
     <location_y>1</location_y>
@@ -151,7 +151,7 @@
       <hidedebug />
     </plugin_config>
     <width>666</width>
-    <z>1</z>
+    <z>4</z>
     <height>566</height>
     <location_x>283</location_x>
     <location_y>-3</location_y>
@@ -167,10 +167,10 @@
       <showRadioHW />
       <showLEDs />
       <showLogOutput />
-      <zoomfactor>251.43718361795933</zoomfactor>
+      <zoomfactor>37.985070137887824</zoomfactor>
     </plugin_config>
     <width>1366</width>
-    <z>5</z>
+    <z>3</z>
     <height>176</height>
     <location_x>0</location_x>
     <location_y>529</location_y>
@@ -194,10 +194,10 @@
       <scriptfile>[CONTIKI_DIR]/ipas/[20150724]maxflow/generator.js</scriptfile>
       <active>true</active>
     </plugin_config>
-    <width>842</width>
+    <width>802</width>
     <z>0</z>
-    <height>561</height>
-    <location_x>522</location_x>
+    <height>580</height>
+    <location_x>562</location_x>
     <location_y>-4</location_y>
   </plugin>
   <plugin>
@@ -206,7 +206,7 @@
       <eh_config_file EXPORT="copy">[APPS_DIR]/senseh/config/EH.config</eh_config_file>
     </plugin_config>
     <width>282</width>
-    <z>3</z>
+    <z>5</z>
     <height>98</height>
     <location_x>0</location_x>
     <location_y>274</location_y>
