@@ -87,7 +87,8 @@ for (var j in sending_periods) {
          */
         log.log("Generating " + packet_generated_count + 
                 " packets every " + packet_generating_period + " milliseconds" +
-                " within " + (sim_period/1000000) + " seconds" + "\n");
+                " within " + (sim_period/1000000) + " seconds" + 
+				" in " + sim.getMotesCount() + " nodes network" + "\n");
         motes = sim.getMotes();
         for (var m = 0; m < motes.length; m++) {
             write(motes[m], "stat reset");
