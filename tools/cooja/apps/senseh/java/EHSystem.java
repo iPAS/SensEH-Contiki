@@ -1,7 +1,12 @@
 import java.util.Properties;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.StringReader;
 
 
 /**
@@ -67,7 +72,41 @@ public class EHSystem { // EHSystem put all the pieces together
     Properties config = new Properties();
     try {
       FileInputStream fis = new FileInputStream(configFile);
-      config.load(fis);
+      //config.load(fis);
+
+      // iPAS: replace [APPS_DIR] with real path
+      String coojaStructure = "/tools/cooja/apps";
+      String appsDir = "[APPS_DIR not found!]";
+      System.err.println(configFile + " VS " + coojaStructure);
+      System.err.println(configFile.matches(coojaStructure));
+      int i = configFile.indexOf(coojaStructure);
+      if (i >= 0) {
+          appsDir = configFile.substring(0, i) + coojaStructure;
+      }
+
+      BufferedReader br = new BufferedReader(new InputStreamReader(fis));
+      String line;
+
+      Pattern p = Pattern.compile("\\[APPS_DIR\\]");
+      StringBuffer sb = new StringBuffer();
+
+      while ((line = br.readLine()) != null) {
+          Matcher m = p.matcher(line);
+
+          boolean isFound = m.find();
+          while (isFound) { // Loop through and create a new String with the replacements
+              m.appendReplacement(sb, appsDir);
+              isFound = m.find();
+          }
+
+          m.appendTail(sb); // Add the last segment of input to the new String
+          sb.append('\n');
+      }
+      br.close();
+
+      config.load(new StringReader(sb.toString()));
+      // iPAS: ---
+
       fis.close();
     } catch (FileNotFoundException e) {
       System.err.println("Energy Harvesting System Configuration file " + configFile
