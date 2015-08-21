@@ -9,12 +9,48 @@
  *   se.sics.cooja.Gui gui -- The GUI Gui.java
  */
 
-sending_periods    = [250, 500, 750, 1000, 1250, 1500, 1750, 2000]; 
-sent_packet_counts = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
+function range(start, stop, step) {
+    if (typeof stop == 'undefined') {
+        // one param defined
+        stop = start;
+        start = 0;
+    }
+
+    if (typeof step == 'undefined') {
+        step = 1;
+    }
+
+    if ((step > 0 && start >= stop) || (step < 0 && start <= stop)) {
+        return [];
+    }
+
+    var result = [];
+    for (var i = start; step > 0 ? i < stop : i > stop; i += step) {
+        result.push(i);
+    }
+
+    return result;
+};
+
+
+// sending_periods    = [250, 500, 750, 1000, 1250, 1500, 1750, 2000]; 
+// sent_packet_counts = [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000];
+
 // sending_periods    = [250, 500, 750, 1000]; // for reminding
 // sent_packet_counts = [100, 200, 300, 400, 500];
+
 // sending_periods    = [2000]; // for reminding
 // sent_packet_counts = [1000];
+
+// sending_periods    = range(100, 2000, 100); // for reminding
+// sent_packet_counts = [100, 1000];
+
+// sending_periods    = range(125, 2000, 125); // for reminding
+// sent_packet_counts = [100, 1000];
+
+sending_periods    = range(125, 2000, 25); // for reminding
+sent_packet_counts = [1000];
+
 
 
 // -----------------------------------------------------------------< LINE 20 >

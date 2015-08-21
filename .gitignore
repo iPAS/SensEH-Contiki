@@ -92,3 +92,5 @@ contiki-cc2530dk.lib
 # Log files
 *.simlog
 *.testlog
+
+ipas/
