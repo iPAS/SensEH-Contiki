@@ -133,7 +133,7 @@ struct xmac_hdr {
 #define ANNOUNCEMENT_PERIOD 4 * CLOCK_SECOND
 
 /* The time before sending an announcement within one announcement cycle. */
-#define ANNOUNCEMENT_TIME (random_rand() % (ANNOUNCEMENT_PERIOD))
+#define ANNOUNCEMENT_TIME (random_rand() % (ANNOUNCEMENT_PERIOD)) // Prevent collision
 
 #define DEFAULT_STROBE_WAIT_TIME (5 * DEFAULT_ON_TIME / 8)
 
@@ -856,12 +856,9 @@ static void
 input_packet(void) {
     struct xmac_hdr *hdr;
 
-
     RIMESTATS_ADD(xmac_rx_all); // iPAS:
 
-
     if (NETSTACK_FRAMER.parse() >= 0) {
-
 
         RIMESTATS_ADD(xmac_rx_ok); // iPAS:
 
@@ -869,7 +866,6 @@ input_packet(void) {
         hdr = packetbuf_dataptr();
 
         if (hdr->dispatch != DISPATCH) {
-
 
             /* iPAS: Received packets */
             if (rimeaddr_cmp(packetbuf_addr(PACKETBUF_ADDR_RECEIVER), &rimeaddr_node_addr))
@@ -939,8 +935,9 @@ input_packet(void) {
 
         } else if (hdr->type == TYPE_STROBE) {
 
-
             /* iPAS: Received strobes */
+            //printf("xmac: got strobe %u (%u/%u)\n", hdr->type, packetbuf_datalen(), packetbuf_totlen());
+
             if (rimeaddr_cmp(packetbuf_addr(PACKETBUF_ADDR_RECEIVER), &rimeaddr_node_addr))
                 RIMESTATS_ADD(xmac_rx_strobe_unicast);
             else
@@ -1000,19 +997,29 @@ input_packet(void) {
         } else if(hdr->type == TYPE_ANNOUNCEMENT) {
             packetbuf_hdrreduce(sizeof(struct xmac_hdr));
             parse_announcements(packetbuf_addr(PACKETBUF_ADDR_SENDER));
+
+            RIMESTATS_ADD(xmac_rx_announcement); // iPAS:
+
+
         #endif /* XMAC_CONF_ANNOUNCEMENTS */
 
         } else if (hdr->type == TYPE_STROBE_ACK) {
             PRINTDEBUG("xmac: stray strobe ack\n");
 
+            RIMESTATS_ADD(xmac_rx_acknowledgement); // iPAS:
+
+
         } else {
-            PRINTF("xmac: unknown type %u (%u/%u)\n", hdr->type, packetbuf_datalen(), len);
+            PRINTF("xmac: unknown type %u (%u/%u)\n", hdr->type, packetbuf_datalen(),packetbuf_totlen());
+
+            RIMESTATS_ADD(xmac_rx_unknown); // iPAS:
+
+
         }
 
 
     } else { /* else of if (NETSTACK_FRAMER.parse() >= 0) */
         PRINTF("xmac: failed to parse (%u)\n", packetbuf_totlen());
-
 
         RIMESTATS_ADD(xmac_rx_fail); // iPAS:
 

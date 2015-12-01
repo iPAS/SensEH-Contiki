@@ -400,7 +400,7 @@ cc2420_transmit(unsigned short payload_len)
         return RADIO_TX_COLLISION;
       }
       if(receive_on) {
-	ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
+        ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
       }
       ENERGEST_ON(ENERGEST_TYPE_TRANSMIT);
       /* We wait until transmission has ended so that we get an
@@ -412,17 +412,21 @@ cc2420_transmit(unsigned short payload_len)
 #endif
       ENERGEST_OFF(ENERGEST_TYPE_TRANSMIT);
       if(receive_on) {
-	ENERGEST_ON(ENERGEST_TYPE_LISTEN);
+        ENERGEST_ON(ENERGEST_TYPE_LISTEN);
       } else {
 	/* We need to explicitly turn off the radio,
 	 * since STXON[CCA] -> TX_ACTIVE -> RX_ACTIVE */
-	off();
+	    off();
       }
 
       if(packetbuf_attr(PACKETBUF_ATTR_RADIO_TXPOWER) > 0) {
         /* Restore the transmission power */
         set_txpower(txpower & 0xff);
       }
+
+
+      RIMESTATS_ADD_WITH(tot_tx_byte, total_len); // iPAS:
+
 
       RELEASE_LOCK();
       return RADIO_TX_OK;
@@ -682,6 +686,10 @@ cc2420_read(void *buf, unsigned short bufsize)
   cc2420_packets_read++;
 
   getrxbyte(&len);
+
+
+  RIMESTATS_ADD_WITH(tot_rx_byte, len); // iPAS:
+
 
   if(len > CC2420_MAX_PACKET_LEN) {
     /* Oops, we must be out of sync. */

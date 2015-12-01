@@ -41,41 +41,53 @@
 #define __RIMESTATS_H__
 
 struct rimestats {
-  unsigned long tx, rx;
+  unsigned long tx, rx; /* In rime.c */
 
-  unsigned long reliabletx, reliablerx,
+  unsigned long reliabletx, reliablerx, /* Be used in runicast.c */
                 rexmit,
                 acktx, noacktx,
                 ackrx, timedout, badackrx;
 
-  /* Reasons for dropping incoming packets: */
-  unsigned long toolong, tooshort, badsynch, badcrc;
 
-  unsigned long contentiondrop, /* Packet dropped due to contention */
-                sendingdrop; /* Packet dropped when we were sending a packet */
+  unsigned long lltx, llrx; /* Be used in either cc2420.c or other MACs  */
 
-  unsigned long lltx, llrx;
+  unsigned long tot_tx_byte; /* Total sent bytes */
+  unsigned long tot_rx_byte; /* Total received bytes */
+
+  unsigned long toolong, tooshort, badsynch, badcrc; /* Reasons for dropping incoming packets: */
+
+  unsigned long contentiondrop, /* Packet dropped due to contention, such as in cc2420.c */
+                sendingdrop; /* Packet dropped when we were sending a packet, such as in xmac.c */
+
 
   /* iPAS: XMAC statistic */
   unsigned long xmac_rx_all;
   unsigned long xmac_rx_ok;
   unsigned long xmac_rx_fail;
+
   unsigned long xmac_rx_unicast; /* Received packets of us */
   unsigned long xmac_rx_broadcast; /* Received packets of the other */
   unsigned long xmac_rx_other; /* Received packets of the other */
+
   unsigned long xmac_rx_strobe_unicast;
   unsigned long xmac_rx_strobe_broadcast;
   unsigned long xmac_rx_strobe_other;
+
+  unsigned long xmac_rx_announcement;
+  unsigned long xmac_rx_acknowledgement;
+  unsigned long xmac_rx_unknown;
 };
 
 #if RIMESTATS_CONF_ENABLED
 /* Don't access this variable directly, use RIMESTATS_ADD and RIMESTATS_GET */
 extern struct rimestats rimestats;
-
 #define RIMESTATS_ADD(x) rimestats.x++
+#define RIMESTATS_ADD_WITH(x, y) rimestats.x+=y
 #define RIMESTATS_GET(x) rimestats.x
+
 #else /* RIMESTATS_CONF_ENABLED */
 #define RIMESTATS_ADD(x)
+#define RIMESTATS_ADD_WITH(x, y)
 #define RIMESTATS_GET(x) 0
 #endif /* RIMESTATS_CONF_ENABLED */
 
