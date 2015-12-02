@@ -66,6 +66,7 @@ static uint8_t dio_send_ok;
 static void
 handle_periodic_timer(void *ptr)
 {
+  rpl_purge_dags();
   rpl_purge_routes();
   rpl_recalculate_ranks();
 
@@ -311,7 +312,7 @@ schedule_dao(rpl_instance_t *instance, clock_time_t latency)
 void
 rpl_schedule_dao(rpl_instance_t *instance)
 {
-  schedule_dao(instance, RPL_DAO_LATENCY);
+  schedule_dao(instance, RPL_DAO_DELAY);
 }
 /*---------------------------------------------------------------------------*/
 void
@@ -325,6 +326,24 @@ rpl_cancel_dao(rpl_instance_t *instance)
 {
   ctimer_stop(&instance->dao_timer);
   ctimer_stop(&instance->dao_lifetime_timer);
+}
+/*---------------------------------------------------------------------------*/
+static void
+handle_unicast_dio_timer(void *ptr)
+{
+  rpl_instance_t *instance = (rpl_instance_t *)ptr;
+  uip_ipaddr_t *target_ipaddr = rpl_get_parent_ipaddr(instance->unicast_dio_target);
+
+  if(target_ipaddr != NULL) {
+    dio_output(instance, target_ipaddr);
+  }
+}
+/*---------------------------------------------------------------------------*/
+void
+rpl_schedule_unicast_dio_immediately(rpl_instance_t *instance)
+{
+  ctimer_set(&instance->unicast_dio_timer, 0,
+                  handle_unicast_dio_timer, instance);
 }
 /*---------------------------------------------------------------------------*/
 #if RPL_WITH_PROBING
@@ -396,13 +415,15 @@ handle_probing_timer(void *ptr)
 {
   rpl_instance_t *instance = (rpl_instance_t *)ptr;
   rpl_parent_t *probing_target = RPL_PROBING_SELECT_FUNC(instance->current_dag);
+  uip_ipaddr_t *target_ipaddr = rpl_get_parent_ipaddr(probing_target);
 
   /* Perform probing */
-  if(probing_target != NULL && rpl_get_parent_ipaddr(probing_target) != NULL) {
-    PRINTF("RPL: probing %3u\n",
-        nbr_table_get_lladdr(rpl_parents, probing_target)->u8[7]);
-    /* Send probe, e.g. unicast DIO or DIS */
-    RPL_PROBING_SEND_FUNC(instance, rpl_get_parent_ipaddr(probing_target));
+  if(target_ipaddr != NULL) {
+    PRINTF("RPL: probing %u ((last tx %u min ago))\n",
+        nbr_table_get_lladdr(rpl_parents, probing_target)->u8[7],
+        (unsigned)((clock_time() - probing_target->last_tx_time) / (60 * CLOCK_SECOND)));
+    /* Send probe (unicast DIO or DIS) */
+    RPL_PROBING_SEND_FUNC(instance, target_ipaddr);
   }
 
   /* Schedule next probing */
