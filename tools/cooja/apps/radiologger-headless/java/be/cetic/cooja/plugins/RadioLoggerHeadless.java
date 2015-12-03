@@ -37,6 +37,7 @@ import java.util.Properties;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.io.File;
+
 import org.jdom.Element;
 
 import se.sics.cooja.ClassDescription;
@@ -51,7 +52,6 @@ import se.sics.cooja.VisPlugin;
 import se.sics.cooja.interfaces.Radio;
 //import se.sics.cooja.plugins.analyzers.PacketAnalyser;
 import se.sics.cooja.plugins.analyzers.PcapExporter;
-
 import se.sics.cooja.util.StringUtils;
 
 /**
@@ -64,77 +64,86 @@ import se.sics.cooja.util.StringUtils;
 @ClassDescription("Headless radio logger")
 @PluginType(PluginType.SIM_PLUGIN)
 public class RadioLoggerHeadless extends VisPlugin {
-  private static final long serialVersionUID = -6927091711697081353L;
+    private static final long serialVersionUID = -6927091711697081353L;
 
-  private final Simulation simulation;
-  private RadioMedium radioMedium;
-  private Observer radioMediumObserver;
-  private PcapExporter pcapExporter;
-  private File pcapFile;
+    private final Simulation simulation;
+    private RadioMedium radioMedium;
+    private Observer radioMediumObserver;
+    private PcapExporter pcapExporter;
+    private File pcapFile;
 
-  public RadioLoggerHeadless(final Simulation simulationToControl, final GUI cooja) {
-    super("Radio messages", cooja, false);
-    System.err.println("Starting headless radio logger");
-    try {
-        pcapExporter = new PcapExporter();
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-    simulation = simulationToControl;
-    radioMedium = simulation.getRadioMedium();
+    public RadioLoggerHeadless(final Simulation simulationToControl, final GUI cooja) {
+        super("Radio messages", cooja, false);
+        System.err.println("Starting headless radio logger");
 
-    radioMedium.addRadioMediumObserver(radioMediumObserver = new Observer() {
-      public void update(Observable obs, Object obj) {
-        RadioConnection conn = radioMedium.getLastConnection();
-        if (conn == null) {
-          return;
-        }
-        RadioPacket radioPacket = conn.getSource().getLastPacketTransmitted();
         try {
-            pcapExporter.exportPacketData(radioPacket.getPacketData());
+            pcapExporter = new PcapExporter();
         } catch (IOException e) {
-            System.err.println("Could not export pcap data");
             e.printStackTrace();
         }
-      }
-    });
-  }
 
-  public void closePlugin() {
-    if (radioMediumObserver != null) {
-      radioMedium.deleteRadioMediumObserver(radioMediumObserver);
+        simulation = simulationToControl;
+        radioMedium = simulation.getRadioMedium();
+
+        radioMedium.addRadioMediumObserver(radioMediumObserver = new Observer() {
+            @Override
+            public void update(Observable obs, Object obj) {
+                RadioConnection conn = radioMedium.getLastConnection();
+                if (conn == null) {
+                    return;
+                }
+
+                RadioPacket radioPacket = conn.getSource().getLastPacketTransmitted();
+                try {
+                    pcapExporter.exportPacketData(radioPacket.getPacketData());
+                } catch (IOException e) {
+                    System.err.println("Could not export pcap data");
+                    e.printStackTrace();
+                }
+            }
+        });
     }
-  }
-  public boolean setConfigXML(Collection<Element> configXML, boolean visAvailable) {
-    System.err.println("RadioLogger.setConfigXML()");
-    for (Element element : configXML) {
-      String name = element.getName();
-      if (name.equals("pcap_file")) {
-        pcapFile = simulation.getGUI().restorePortablePath(new File(element.getText()));
-        try {
-          pcapExporter.openPcap(pcapFile);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
+
+    @Override
+    public void closePlugin() {
+        if (radioMediumObserver != null) {
+            radioMedium.deleteRadioMediumObserver(radioMediumObserver);
         }
-      }
-    return true;
-  }
-
-  public Collection<Element> getConfigXML() {
-    System.err.println("RadioLogger.getConfigXML()");
-    ArrayList<Element> config = new ArrayList<Element>();
-    Element element;
-
-    if (pcapFile != null) {
-      element = new Element("pcap_file");
-      File file = simulation.getGUI().createPortablePath(pcapFile);
-      element.setText(pcapFile.getPath().replaceAll("\\\\", "/"));
-      element.setAttribute("EXPORT", "discard");
-      config.add(element);
     }
 
-    return config;
-  }
+    @Override
+    public boolean setConfigXML(Collection<Element> configXML, boolean visAvailable) {
+        for (Element element : configXML) {
+            String name = element.getName();
+
+            if (name.equals("pcap_file")) {
+                pcapFile = simulation.getGUI().restorePortablePath(new File(element.getText()));
+                try {
+                    pcapExporter.openPcap(pcapFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return true;
+    }
+
+    @Override
+    public Collection<Element> getConfigXML() {
+        ArrayList<Element> configXML = new ArrayList<Element>();
+        Element element;
+
+        if (pcapFile == null)
+            pcapFile = (pcapExporter.pcapFile == null)?
+                    new File("Please specify pcap here!") : pcapExporter.pcapFile;
+
+        element = new Element("pcap_file");
+        File file = simulation.getGUI().createPortablePath(pcapFile);
+        element.setText(pcapFile.getPath().replaceAll("\\\\", "/"));
+        element.setAttribute("EXPORT", "discard");
+        configXML.add(element);
+
+        return configXML;
+    }
 
 }

@@ -8,16 +8,19 @@ import java.io.IOException;
 public class PcapExporter {
 
     DataOutputStream out;
+    public File pcapFile;
+
 
     public PcapExporter() throws IOException {
     }
 
     public void openPcap() throws IOException {
-        out = new DataOutputStream(new FileOutputStream("radiolog-" + System.currentTimeMillis() + ".pcap"));
-        openPcap(out);
+        pcapFile = new File("radiolog-" + System.currentTimeMillis() + ".pcap");
+        openPcap(pcapFile);
     }
-    public void openPcap(File pcapFile) throws IOException {
-        out = new DataOutputStream(new FileOutputStream(pcapFile));
+    public void openPcap(File file) throws IOException {
+        pcapFile = file;
+        out = new DataOutputStream(new FileOutputStream(file));
         openPcap(out);
     }
     public void openPcap(DataOutputStream out) throws IOException {
@@ -30,7 +33,7 @@ public class PcapExporter {
         out.writeInt(4096);
         out.writeInt(195); /* 195 for LINKTYPE_IEEE802_15_4 */
         out.flush();
-        System.out.println("Opened pcap file!");
+        System.out.println("Opened PCAP file!");
     }
     public void closePcap() throws IOException {
         out.close();
