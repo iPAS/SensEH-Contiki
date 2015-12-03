@@ -23,8 +23,8 @@ public class Battery extends EnergyStorage {
      */
     private double CAPACITY;
 
-    private double maxEnergy; //mJ
-    private double energy; //mJ
+    private double maxEnergy;  //mJ
+    private double energy;  //mJ
 
     private LookupTable chargeVoltageLUT;
     private double NOMINAL_VOLTAGE;
@@ -36,17 +36,16 @@ public class Battery extends EnergyStorage {
         this.name = name;
         chargeVoltageLUT = new LookupTable(name, chargeVoltageLookupTableFile);
         numBatteries = 1;
-        CAPACITY = capacity; // mAh
+        CAPACITY = capacity;  // mAh
         NOMINAL_VOLTAGE = nominalVoltage;
-        energy = maxEnergy = CAPACITY * 3600 * NOMINAL_VOLTAGE; // mW·h x 3600 --> mW·s (mJ)
+        energy = maxEnergy = CAPACITY * 3600 * NOMINAL_VOLTAGE;  // mA·h x 3600 x V --> mW·s (mJ)
         MIN_OPERATING_VOLTAGE = minVoltage;
 
-        System.out.println(name +
-                " Battery is intialized with:" +
-                "\nCharge: "         + CAPACITY +
-                "\nVoltage: "        + getVoltage(energy) +
-                "\nNominalVoltage: " + NOMINAL_VOLTAGE +
-                "\nEnergy: "         + energy);
+        System.out.println(name + " Battery is intialized with:" +
+                "\nCharge: "         + CAPACITY + " mAh" +
+                "\nVoltage: "        + getVoltage(energy) + " V" +
+                "\nNominalVoltage: " + NOMINAL_VOLTAGE + " V" +
+                "\nEnergy: "         + energy + " mJ");
     }
 
     public void setNumBatteries(int numBatteries){

@@ -78,8 +78,8 @@ public class EHNode{
             //((SkyMote)mote).getCPU().reset();
 
             if (!SensEHGUI.QUIET) {
-                String str = "Mote #" + mote.getID() + "'s battery is empty at (ms): "
-                        + simulation.getSimulationTimeMillis();
+                String str = "Mote #" + mote.getID()
+                           + "'s battery is empty at (ms): " + simulation.getSimulationTimeMillis();
                 this.senseh.log.addMessage(str);
                 logger.info(str);
             }

@@ -178,7 +178,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
         });
 
         /* Register menu actions */
-        visualizer.registerSimulationMenuAction(ShowAllRanges.class); // iPAS
+        visualizer.registerSimulationMenuAction(ShowAllRanges.class);  // [iPAS]: For showing all node's ranges
         visualizer.registerSimulationMenuAction(RangeMenuAction.class);
         visualizer.registerSimulationMenuAction(SuccessRatioMenuAction.class);
 
@@ -354,7 +354,11 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     public void paintAfterMotes(Graphics g) {
     }
 
-    public static class ShowAllRanges implements SimulationMenuAction { // iPAS, show all node tx,int ranges
+    /**
+     * @author ipas
+     * [iPAS] Show all node tx,int ranges or just the selected one.
+     */
+    public static class ShowAllRanges implements SimulationMenuAction {
         @Override
         public boolean isEnabled(Visualizer visualizer, Simulation simulation) {
             return true;

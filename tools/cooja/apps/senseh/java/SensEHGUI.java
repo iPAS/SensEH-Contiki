@@ -55,7 +55,7 @@ public class SensEHGUI extends VisPlugin {
         this.simulation = simulation;
         //consumption = new Consumption(simulation);
 
-        log.addPopupMenuItem(null, true); /* Create message list popup */
+        log.addPopupMenuItem(null, true);  // Create message list popup
         add(new JScrollPane(log));
 
         if (!QUIET) {
@@ -78,13 +78,16 @@ public class SensEHGUI extends VisPlugin {
         fileChooser.setSelectedFile(suggest);
         fileChooser.setDialogTitle("Select configuration file for harvesting system");
         int reply = fileChooser.showOpenDialog(GUI.getTopParentContainer());
+
         if (reply == JFileChooser.APPROVE_OPTION) {
             ehConfigFile = fileChooser.getSelectedFile();
             GUI.setExternalToolsSetting("DEFAULT_EH_CONFIG", ehConfigFile.getAbsolutePath());
         }
+
         if (ehConfigFile == null) {
             throw new RuntimeException("No configuration file for harvesting system");
         }
+
         init(ehConfigFile.getAbsolutePath());
     }
 
