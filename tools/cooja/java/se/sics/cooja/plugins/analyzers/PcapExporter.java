@@ -1,18 +1,26 @@
 package se.sics.cooja.plugins.analyzers;
 
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
 public class PcapExporter {
 
     DataOutputStream out;
-    
+
     public PcapExporter() throws IOException {
     }
-    
+
     public void openPcap() throws IOException {
         out = new DataOutputStream(new FileOutputStream("radiolog-" + System.currentTimeMillis() + ".pcap"));
+        openPcap(out);
+    }
+    public void openPcap(File pcapFile) throws IOException {
+        out = new DataOutputStream(new FileOutputStream(pcapFile));
+        openPcap(out);
+    }
+    public void openPcap(DataOutputStream out) throws IOException {
         /* pcap header */
         out.writeInt(0xa1b2c3d4);
         out.writeShort(0x0002);
@@ -45,7 +53,7 @@ public class PcapExporter {
             e.printStackTrace();
         }
     }
-    
-    
-    
+
+
+
 }

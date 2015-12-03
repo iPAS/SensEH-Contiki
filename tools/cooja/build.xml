@@ -98,6 +98,7 @@ The COOJA Simulator
     <ant antfile="build.xml" dir="apps/collect-view" target="clean" inheritAll="false"/>
 	<ant antfile="build.xml" dir="apps/powertracker" target="clean" inheritAll="false"/>
 	<ant antfile="build.xml" dir="apps/senseh" target="clean" inheritAll="false"/>
+	<ant antfile="build.xml" dir="apps/radiologger-headless" target="clean" inheritAll="false"/>
   </target>
 
   <target name="run" depends="init, compile, jar, copy configs">
@@ -193,6 +194,7 @@ The COOJA Simulator
     <ant antfile="build.xml" dir="apps/collect-view" target="jar" inheritAll="false"/>
     <ant antfile="build.xml" dir="apps/powertracker" target="jar" inheritAll="false"/>
 	<ant antfile="build.xml" dir="apps/senseh" target="jar" inheritAll="false"/>
+	<ant antfile="build.xml" dir="apps/radiologger-headless" target="jar" inheritAll="false"/>
   </target>
 
   <target name="run_nogui" depends="init, compile, jar, copy configs">
