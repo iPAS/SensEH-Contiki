@@ -71,6 +71,8 @@ public class EHNode{
         dischargeConsumption();
         consumption.setVoltage(ehSys.getVoltage());  // Assume that it's fixed, and regulated.
 
+        // TODO [iPAS]: Save historical data into database.
+
         // TODO [iPAS]: mote.get ... stop mote if drained out
         if (((Battery)ehSys.getStorage()).isDepleted()) {
             //((SkyMote)mote).getCPU().stop()

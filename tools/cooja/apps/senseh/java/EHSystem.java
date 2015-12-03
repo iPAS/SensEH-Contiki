@@ -55,7 +55,7 @@ public class EHSystem { // EHSystem put all the pieces together
         return totalHarvestedEnergy;
     }
 
-    public void setTotalHarvestedEnergy(double energy_mj) { // iPAS: for hacking only
+    public void setTotalHarvestedEnergy(double energy_mj) {  // [iPAS]: for hacking only
         totalHarvestedEnergy = energy_mj;
     }
 
@@ -74,15 +74,15 @@ public class EHSystem { // EHSystem put all the pieces together
             FileInputStream fis = new FileInputStream(configFile);
             //config.load(fis);
 
-            // iPAS: replace [APPS_DIR] with real path
+            // [iPAS]: Replace [APPS_DIR] with real path
             String coojaStructure = "/tools/cooja/apps";
             String appsDir = "[APPS_DIR not found!]";
-            System.err.println(configFile + " VS " + coojaStructure);
-            System.err.println(configFile.matches(coojaStructure));
             int i = configFile.indexOf(coojaStructure);
-            if (i >= 0) {
+
+            if (i >= 0)   // If be correct
                 appsDir = configFile.substring(0, i) + coojaStructure;
-            }
+            else
+                System.err.println(configFile + " NOT in [APPS_DIR] !");
 
             BufferedReader br = new BufferedReader(new InputStreamReader(fis));
             String line;
@@ -94,7 +94,7 @@ public class EHSystem { // EHSystem put all the pieces together
                 Matcher m = p.matcher(line);
 
                 boolean isFound = m.find();
-                while (isFound) { // Loop through and create a new String with the replacements
+                while (isFound) {  // Loop through and create a new String with the replacements
                     m.appendReplacement(sb, appsDir);
                     isFound = m.find();
                 }
@@ -108,10 +108,12 @@ public class EHSystem { // EHSystem put all the pieces together
             // iPAS: ---
 
             fis.close();
+
         } catch (FileNotFoundException e) {
             System.err.println("Energy Harvesting System Configuration file " + configFile
                              + " could not be read.. Exiting...");
             System.exit(-1);
+
         } catch (IOException e) {
             System.err.println("Energy Harvesting System Configuration file " + configFile
                              + " could not be loaded.. Exiting...");
