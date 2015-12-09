@@ -81,7 +81,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
 
     private Box           top, ratioRX, ratioTX, rangeTX, rangeINT;
 
-    private boolean       doShowAllRanges = false;                                     // iPAS
+    private boolean       doShowAllRanges = false;  // [iPAS]
 
     @Override
     public void setActive(Simulation simulation, Visualizer vis) {
@@ -232,7 +232,7 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
         visualizer.getCurrentCanvas().remove(top);
 
         /* Unregister menu actions */
-        visualizer.unregisterSimulationMenuAction(ShowAllRanges.class); // iPAS
+        visualizer.unregisterSimulationMenuAction(ShowAllRanges.class);  // [iPAS]
         visualizer.unregisterSimulationMenuAction(RangeMenuAction.class);
         visualizer.unregisterSimulationMenuAction(SuccessRatioMenuAction.class);
     }
