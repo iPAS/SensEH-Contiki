@@ -233,6 +233,8 @@ on(void) {
         radio_is_on = 1;
         NETSTACK_RADIO.on();
         LEDS_ON(LEDS_RED);
+
+        P2OUT |= BIT3;  // [iPAS]: '1' to P2.3
     }
 }
 
@@ -243,6 +245,8 @@ off(void) {
         radio_is_on = 0;
         NETSTACK_RADIO.off();
         LEDS_OFF(LEDS_RED);
+
+        P2OUT &= ~BIT3;  // [iPAS]: '0' to P2.3
     }
 }
 
@@ -1107,6 +1111,9 @@ init(void) {
     announcement_register_listen_callback(listen_callback);
     ctimer_set(&announcement_cycle_ctimer, ANNOUNCEMENT_TIME, cycle_announcement, NULL);
     #endif /* XMAC_CONF_ANNOUNCEMENTS */
+
+
+    P2DIR |= BIT3;  // [iPAS]: set the direction of P2.3 to output.
 }
 
 /*---------------------------------------------------------------------------*/

@@ -53,6 +53,7 @@ import se.sics.cooja.interfaces.Radio;
 //import se.sics.cooja.plugins.analyzers.PacketAnalyser;
 import se.sics.cooja.plugins.analyzers.PcapExporter;
 import se.sics.cooja.util.StringUtils;
+import sun.security.util.Length;
 
 /**
  * Radio Logger which exports a pcap file only.
@@ -69,21 +70,28 @@ public class RadioLoggerHeadless extends VisPlugin {
     private final Simulation simulation;
     private RadioMedium radioMedium;
     private Observer radioMediumObserver;
-    private PcapExporter pcapExporter;
+    private PcapExporter    pcapSendingExporter;
     private File pcapFile;
+    private PcapExporter [] pcapReceivingExporter;
+    private int motesCount;
 
     public RadioLoggerHeadless(final Simulation simulationToControl, final GUI cooja) {
         super("Radio messages", cooja, false);
         System.err.println("Starting headless radio logger");
 
+        simulation = simulationToControl;
+        radioMedium = simulation.getRadioMedium();
+        motesCount = simulation.getMotesCount();
+
         try {
-            pcapExporter = new PcapExporter();
+            pcapSendingExporter = new PcapExporter();
+            pcapReceivingExporter = new PcapExporter[motesCount];
+            for (int i = 0; i < motesCount; i++)
+                pcapReceivingExporter[i] = new PcapExporter();
+
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        simulation = simulationToControl;
-        radioMedium = simulation.getRadioMedium();
 
         radioMedium.addRadioMediumObserver(radioMediumObserver = new Observer() {
             @Override
@@ -92,12 +100,27 @@ public class RadioLoggerHeadless extends VisPlugin {
                 if (conn == null) {
                     return;
                 }
+                RadioPacket radioTxPacket = conn.getSource().getLastPacketTransmitted();
 
-                RadioPacket radioPacket = conn.getSource().getLastPacketTransmitted();
+                /**
+                 * From receiver aspect  */
+                for (Radio radioRx : conn.getAllDestinations()) {
+                    //RadioPacket radioRxPacket = radioRx.getLastPacketReceived();  // It is always null.
+                    try {
+                        pcapReceivingExporter[radioRx.getMote().getID() - 1
+                                              ].exportPacketData( radioTxPacket.getPacketData() );
+                    } catch (IOException e) {
+                        System.err.println("Cannot export PCAP for receivers");
+                        e.printStackTrace();
+                    }
+                }
+
+                /**
+                 * From sender aspect  */
                 try {
-                    pcapExporter.exportPacketData(radioPacket.getPacketData());
+                    pcapSendingExporter.exportPacketData( radioTxPacket.getPacketData() );
                 } catch (IOException e) {
-                    System.err.println("Could not export pcap data");
+                    System.err.println("Cannot export PCAP for senders");
                     e.printStackTrace();
                 }
             }
@@ -106,25 +129,41 @@ public class RadioLoggerHeadless extends VisPlugin {
 
     @Override
     public void closePlugin() {
-        if (radioMediumObserver != null) {
+        if (radioMediumObserver != null)
             radioMedium.deleteRadioMediumObserver(radioMediumObserver);
-        }
     }
 
     @Override
     public boolean setConfigXML(Collection<Element> configXML, boolean visAvailable) {
         for (Element element : configXML) {
             String name = element.getName();
-
             if (name.equals("pcap_file")) {
-                pcapFile = simulation.getGUI().restorePortablePath(new File(element.getText()));
+
+                /**
+                 * Read file-path configuration  */
+                final String fext = ".pcap";
+                String fname = element.getText();
+                if (fname.lastIndexOf(fext) >= 0)
+                    fname = fname.substring(0, fname.lastIndexOf(fext));
+
+                /**
+                 * Setup the exporter  */
+                pcapFile = simulation.getGUI().restorePortablePath(new File(fname + fext));
                 try {
-                    pcapExporter.openPcap(pcapFile);
+                    pcapSendingExporter.openPcap(pcapFile);
+
+                    for (int i = 0; i < motesCount; i++)
+                        pcapReceivingExporter[i].openPcap(
+                                simulation.getGUI().restorePortablePath(
+                                        new File(fname + "_" + (i+1) + fext)));
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+                break;
             }
         }
+
         return true;
     }
 
@@ -132,14 +171,14 @@ public class RadioLoggerHeadless extends VisPlugin {
     public Collection<Element> getConfigXML() {
         ArrayList<Element> configXML = new ArrayList<Element>();
         Element element;
-
-        if (pcapFile == null)
-            pcapFile = (pcapExporter.pcapFile == null)?
-                    new File("Please specify pcap here!") : pcapExporter.pcapFile;
-
         element = new Element("pcap_file");
+        if (pcapFile == null) {
+            pcapFile = (pcapSendingExporter.pcapFile != null) ?
+                        pcapSendingExporter.pcapFile :
+                        new File("determine_file_here.pcap");
+        }
         File file = simulation.getGUI().createPortablePath(pcapFile);
-        element.setText(pcapFile.getPath().replaceAll("\\\\", "/"));
+        element.setText(file.getPath().replaceAll("\\\\", "/"));
         element.setAttribute("EXPORT", "discard");
         configXML.add(element);
 

@@ -210,7 +210,6 @@ on(void) {
     strobe(CC2420_SRXON);
 
     BUSYWAIT_UNTIL(status() & (BV(CC2420_XOSC16M_STABLE)), RTIMER_SECOND / 100);
-
     ENERGEST_ON(ENERGEST_TYPE_LISTEN);
     receive_on = 1;
 }
@@ -222,8 +221,8 @@ off(void) {
 
     /* Wait for transmission to end before turning radio off. */
     BUSYWAIT_UNTIL(!(status() & BV(CC2420_TX_ACTIVE)), RTIMER_SECOND / 10);
-
     ENERGEST_OFF(ENERGEST_TYPE_LISTEN);
+
     strobe(CC2420_SRFOFF);
     CC2420_DISABLE_FIFOP_INT();
 
@@ -516,7 +515,7 @@ cc2420_send(const void *payload, unsigned short payload_len) {
 }
 
 /** ---------------------------------------------------------------------------
- *
+ * Switch on/off cc2420
  */
 int
 cc2420_off(void) {
@@ -550,9 +549,6 @@ cc2420_off(void) {
     return 1;
 }
 
-/** ---------------------------------------------------------------------------
- *
- */
 int
 cc2420_on(void) {
     if(receive_on) {
@@ -571,16 +567,13 @@ cc2420_on(void) {
 }
 
 /** ---------------------------------------------------------------------------
- *
+ * Get/set channel
  */
 int
 cc2420_get_channel(void) {
     return channel;
 }
 
-/** ---------------------------------------------------------------------------
- *
- */
 int
 cc2420_set_channel(int c) {
     uint16_t f;
@@ -613,7 +606,7 @@ cc2420_set_channel(int c) {
 }
 
 /** ---------------------------------------------------------------------------
- *
+ * Set PANID, ID, and IEEE_ADDR
  */
 void
 cc2420_set_pan_addr(unsigned pan, unsigned addr, const uint8_t *ieee_addr) {
