@@ -68,13 +68,19 @@ public class RadioLoggerHeadless extends VisPlugin {
     private static final long serialVersionUID = -6927091711697081353L;
 
     private final Simulation simulation;
-    private RadioMedium radioMedium;
-    private Observer radioMediumObserver;
-    private PcapExporter    pcapSendingExporter;
+    private RadioMedium     radioMedium;
+    private Observer        radioMediumObserver;
     private File pcapFile;
+    private PcapExporter    pcapSendingExporter;
     private PcapExporter [] pcapReceivingExporter;
     private int motesCount;
 
+    /** ***********************************************************************
+     * Constructor
+     *
+     * @param simulationToControl
+     * @param cooja
+     */
     public RadioLoggerHeadless(final Simulation simulationToControl, final GUI cooja) {
         super("Radio messages", cooja, false);
         System.err.println("Starting headless radio logger");
@@ -103,12 +109,13 @@ public class RadioLoggerHeadless extends VisPlugin {
                 RadioPacket radioTxPacket = conn.getSource().getLastPacketTransmitted();
 
                 /**
-                 * From receiver aspect  */
+                 * From receiver aspect
+                 * [iPAS]: xxx  */
                 for (Radio radioRx : conn.getAllDestinations()) {
-                    //RadioPacket radioRxPacket = radioRx.getLastPacketReceived();  // It is always null.
+                    //RadioPacket radioRxPacket = radioRx.getLastPacketReceived();  // It is always null !?
                     try {
-                        pcapReceivingExporter[radioRx.getMote().getID() - 1
-                                              ].exportPacketData( radioTxPacket.getPacketData() );
+                        int i = radioRx.getMote().getID() - 1;
+                        pcapReceivingExporter[i].exportPacketData( radioTxPacket.getPacketData() );
                     } catch (IOException e) {
                         System.err.println("Cannot export PCAP for receivers");
                         e.printStackTrace();
@@ -127,12 +134,18 @@ public class RadioLoggerHeadless extends VisPlugin {
         });
     }
 
+    /** ***********************************************************************
+     * Called before close.
+     */
     @Override
     public void closePlugin() {
         if (radioMediumObserver != null)
             radioMedium.deleteRadioMediumObserver(radioMediumObserver);
     }
 
+    /** ***********************************************************************
+     * Called on opening the plug-in.
+     */
     @Override
     public boolean setConfigXML(Collection<Element> configXML, boolean visAvailable) {
         for (Element element : configXML) {
@@ -167,6 +180,9 @@ public class RadioLoggerHeadless extends VisPlugin {
         return true;
     }
 
+    /** ***********************************************************************
+     * Called before closing the plug-in.
+     */
     @Override
     public Collection<Element> getConfigXML() {
         ArrayList<Element> configXML = new ArrayList<Element>();

@@ -445,4 +445,5 @@ public class UDGMVisualizerSkin implements VisualizerSkin {
     public Visualizer getVisualizer() {
         return visualizer;
     }
+
 }

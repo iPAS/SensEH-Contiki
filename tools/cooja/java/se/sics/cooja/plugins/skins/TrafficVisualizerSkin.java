@@ -60,175 +60,230 @@ import se.sics.cooja.radiomediums.AbstractRadioMedium;
 @ClassDescription("Radio traffic")
 @SupportedArguments(radioMediums = {AbstractRadioMedium.class})
 public class TrafficVisualizerSkin implements VisualizerSkin {
-  private static Logger logger = Logger.getLogger(TrafficVisualizerSkin.class);
 
-  private final int MAX_HISTORY_SIZE = 200;
+    private static Logger logger = Logger.getLogger(TrafficVisualizerSkin.class);
 
-  private boolean active = false;
-  private Simulation simulation = null;
-  private Visualizer visualizer = null;
-  private AbstractRadioMedium radioMedium = null;
+    private final int MAX_HISTORY_SIZE = 200;
 
-  private ArrayList<RadioConnectionArrow> historyList = new ArrayList<RadioConnectionArrow>();
-  private RadioConnectionArrow[] history = null;
+    private boolean             active      = false;
+    private Simulation          simulation  = null;
+    private Visualizer          visualizer  = null;
+    private AbstractRadioMedium radioMedium = null;
 
-  private Observer radioMediumObserver = new Observer() {
-    public void update(Observable obs, Object obj) {
-      RadioConnection last = radioMedium.getLastConnection();
-      if (last != null && historyList.size() < MAX_HISTORY_SIZE) {
-        historyList.add(new RadioConnectionArrow(last));
-        history = historyList.toArray(new RadioConnectionArrow[0]);
-        visualizer.repaint(500);
-      }
-    }
-  };
-  private TimeEvent ageArrowsTimeEvent = new TimeEvent(0) {
-    public void execute(long t) {
-      if (!active) {
-        return;
-      }
+    private ArrayList<RadioConnectionArrow> historyList = new ArrayList<RadioConnectionArrow>();
+    private RadioConnectionArrow[]          history     = null;
 
-      if (historyList.size() > 0) {
-        boolean hasOld = false;
-
-        /* Increase age */
-        for (RadioConnectionArrow connArrow : historyList) {
-          connArrow.increaseAge();
-          if(connArrow.getAge() >= connArrow.getMaxAge()) {
-            hasOld = true;
-          }
-        }
-
-        /* Remove too old arrows */
-        if (hasOld) {
-          RadioConnectionArrow[] historyArr = historyList.toArray(new RadioConnectionArrow[0]);
-          for (RadioConnectionArrow connArrow : historyArr) {
-            if(connArrow.getAge() >= connArrow.getMaxAge()) {
-              historyList.remove(connArrow);
+    private Observer radioMediumObserver = new Observer() {
+        @Override
+        public void update(Observable obs, Object obj) {
+            RadioConnection last = radioMedium.getLastConnection();
+            if (last != null &&
+                historyList.size() < MAX_HISTORY_SIZE) {
+                historyList.add(new RadioConnectionArrow(last));
+                history = historyList.toArray(new RadioConnectionArrow[0]);
+                visualizer.repaint(500);
             }
-          }
-          historyArr = historyList.toArray(new RadioConnectionArrow[0]);
+        }
+    };
+
+    private TimeEvent ageArrowsTimeEvent = new TimeEvent(0) {
+        @Override
+        public void execute(long t) {
+            if (!active) {
+                return;
+            }
+
+            if (historyList.size() > 0) {
+                boolean hasOld = false;
+
+                /* Increase age */
+                for (RadioConnectionArrow connArrow : historyList) {
+                    connArrow.increaseAge();
+                    if (connArrow.getAge() >= connArrow.getMaxAge()) {
+                        hasOld = true;
+                    }
+                }
+
+                /* Remove too old arrows */
+                if (hasOld) {
+                    RadioConnectionArrow[] historyArr = historyList.toArray(
+                            new RadioConnectionArrow[0]);
+                    for (RadioConnectionArrow connArrow : historyArr) {
+                        if (connArrow.getAge() >= connArrow.getMaxAge()) {
+                            historyList.remove(connArrow);
+                        }
+                    }
+                    historyArr = historyList.toArray(new RadioConnectionArrow[0]);
+                }
+
+                visualizer.repaint(500);
+            }
+
+            /* Reschedule myself */
+            simulation.scheduleEvent(this, t + 100*Simulation.MILLISECOND);
+        }
+    };
+
+
+    /**
+     *
+     */
+    @Override
+    public void setActive(final Simulation simulation, Visualizer vis) {
+        this.radioMedium = (AbstractRadioMedium)simulation.getRadioMedium();
+        this.simulation = simulation;
+        this.visualizer = vis;
+        this.active = true;
+
+        simulation.invokeSimulationThread(new Runnable() {
+            @Override
+            public void run() {
+                historyList.clear();
+                history = null;
+
+                /* Start observing radio medium for transmissions */
+                radioMedium.addRadioMediumObserver(radioMediumObserver);
+
+                /* Fade away arrows */
+                simulation.scheduleEvent(
+                        ageArrowsTimeEvent,
+                        simulation.getSimulationTime() + 100*Simulation.MILLISECOND);
+            }
+        });
+    }
+
+    /**
+     *
+     */
+    @Override
+    public void setInactive() {
+        this.active = false;
+        if (simulation == null) {  /* Skin was never activated */
+            return;
         }
 
-        visualizer.repaint(500);
-      }
-
-      /* Reschedule myself */
-      simulation.scheduleEvent(this, t + 100*Simulation.MILLISECOND);
-    }
-  };
-
-  public void setActive(final Simulation simulation, Visualizer vis) {
-    this.radioMedium = (AbstractRadioMedium) simulation.getRadioMedium();
-    this.simulation = simulation;
-    this.visualizer = vis;
-    this.active = true;
-
-    simulation.invokeSimulationThread(new Runnable() {
-      public void run() {
-        historyList.clear();
-        history = null;
-
-        /* Start observing radio medium for transmissions */
-        radioMedium.addRadioMediumObserver(radioMediumObserver);
-
-        /* Fade away arrows */
-        simulation.scheduleEvent(ageArrowsTimeEvent, simulation.getSimulationTime() + 100*Simulation.MILLISECOND);
-      }
-    });
-  }
-
-  public void setInactive() {
-    this.active = false;
-    if (simulation == null) {
-      /* Skin was never activated */
-      return;
+        radioMedium.deleteRadioMediumObserver(radioMediumObserver);  // Stop observing radio medium
     }
 
-    /* Stop observing radio medium */
-    radioMedium.deleteRadioMediumObserver(radioMediumObserver);
-  }
-
-  public Color[] getColorOf(Mote mote) {
-    return null;
-  }
-
-  private Polygon arrowPoly = new Polygon();
-  private void drawArrow(Graphics g, int xSource, int ySource, int xDest, int yDest, int delta) {
-    double dx = xSource - xDest;
-    double dy = ySource - yDest;
-    double dir = Math.atan2(dx, dy);
-    double len = Math.sqrt(dx * dx + dy * dy);
-    dx /= len;
-    dy /= len;
-    len -= delta;
-    xDest = xSource - (int) (dx * len);
-    yDest = ySource - (int) (dy * len);
-    g.drawLine(xDest, yDest, xSource, ySource);
-
-    final int size = 8;
-    arrowPoly.reset();
-    arrowPoly.addPoint(xDest, yDest);
-    arrowPoly.addPoint(xDest + xCor(size, dir + 0.5), yDest + yCor(size, dir + 0.5));
-    arrowPoly.addPoint(xDest + xCor(size, dir - 0.5), yDest + yCor(size, dir - 0.5));
-    arrowPoly.addPoint(xDest, yDest);
-    g.fillPolygon(arrowPoly);
-  }
-
-  private int yCor(int len, double dir) {
-    return (int)(0.5 + len * Math.cos(dir));
-  }
-
-  private int xCor(int len, double dir) {
-    return (int)(0.5 + len * Math.sin(dir));
-  }
-
-  public void paintBeforeMotes(Graphics g) {
-    RadioConnectionArrow[] historyCopy = history;
-    if (historyCopy == null) {
-      return;
+    /**
+     *
+     */
+    @Override
+    public Color[] getColorOf(Mote mote) {
+        return null;
     }
-    for (RadioConnectionArrow connArrow : historyCopy) {
-      float colorHistoryIndex = (float)connArrow.getAge() / (float)connArrow.getMaxAge();
-      g.setColor(new Color(colorHistoryIndex, colorHistoryIndex, 1.0f));
-      Radio source = connArrow.getConnection().getSource();
-      Point sourcePoint = visualizer.transformPositionToPixel(source.getPosition());
-      for (Radio destRadio : connArrow.getConnection().getDestinations()) {
-        Position destPos = destRadio.getPosition();
-        Point destPoint = visualizer.transformPositionToPixel(destPos);
-        drawArrow(g, sourcePoint.x, sourcePoint.y, destPoint.x, destPoint.y, 8);
-      }
-    }
-  }
 
-  public void paintAfterMotes(Graphics g) {
-  }
 
-  public Visualizer getVisualizer() {
-    return visualizer;
-  }
+    private Polygon arrowPoly = new Polygon();
 
-  private static class RadioConnectionArrow {
-    private RadioConnection conn;
-    private int age;
-    private static final int MAX_AGE = 10;
-    RadioConnectionArrow(RadioConnection conn) {
-      this.conn = conn;
-      this.age = 0;
+    /**
+     *
+     * @param g
+     * @param xSource
+     * @param ySource
+     * @param xDest
+     * @param yDest
+     * @param delta
+     */
+    private void drawArrow(Graphics g, int xSource, int ySource, int xDest, int yDest, int delta) {
+        double dx = xSource - xDest;
+        double dy = ySource - yDest;
+        double dir = Math.atan2(dx, dy);
+        double len = Math.sqrt(dx * dx + dy * dy);
+        dx /= len;
+        dy /= len;
+        len -= delta;
+        xDest = xSource - (int)(dx * len);
+        yDest = ySource - (int)(dy * len);
+        g.drawLine(xDest, yDest, xSource, ySource);
+
+        final int size = 8;
+        arrowPoly.reset();
+        arrowPoly.addPoint(xDest, yDest);
+        arrowPoly.addPoint(xDest + xCor(size, dir + 0.5), yDest + yCor(size, dir + 0.5));
+        arrowPoly.addPoint(xDest + xCor(size, dir - 0.5), yDest + yCor(size, dir - 0.5));
+        arrowPoly.addPoint(xDest, yDest);
+        g.fillPolygon(arrowPoly);
     }
-    public void increaseAge() {
-      if (age < MAX_AGE) {
-        age++;
-      }
+
+    private int yCor(int len, double dir) {
+        return (int)(0.5 + len * Math.cos(dir));
     }
-    public int getAge() {
-      return age;
+
+    private int xCor(int len, double dir) {
+        return (int)(0.5 + len * Math.sin(dir));
     }
-    public RadioConnection getConnection() {
-      return conn;
+
+
+    /**
+     *
+     */
+    @Override
+    public void paintBeforeMotes(Graphics g) {
+        RadioConnectionArrow[] historyCopy = history;
+        if (historyCopy == null) {
+            return;
+        }
+        for (RadioConnectionArrow connArrow : historyCopy) {
+            float colorHistoryIndex = (float)connArrow.getAge() / (float)connArrow.getMaxAge();
+            g.setColor(new Color(colorHistoryIndex, colorHistoryIndex, 1.0f));
+            Radio source = connArrow.getConnection().getSource();
+            Point sourcePoint = visualizer.transformPositionToPixel(source.getPosition());
+            for (Radio destRadio : connArrow.getConnection().getDestinations()) {
+                Position destPos = destRadio.getPosition();
+                Point destPoint = visualizer.transformPositionToPixel(destPos);
+                drawArrow(g, sourcePoint.x, sourcePoint.y, destPoint.x, destPoint.y, 8);
+            }
+        }
     }
-    public int getMaxAge() {
-      return MAX_AGE;
+
+    /**
+     *
+     */
+    @Override
+    public void paintAfterMotes(Graphics g) {
     }
-  }
+
+    /**
+     *
+     */
+    @Override
+    public Visualizer getVisualizer() {
+        return visualizer;
+    }
+
+
+    /**
+     *
+     */
+    private static class RadioConnectionArrow {
+
+        private RadioConnection  conn;
+        private int              age;
+        private static final int MAX_AGE = 10;
+
+        RadioConnectionArrow(RadioConnection conn) {
+            this.conn = conn;
+            this.age = 0;
+        }
+
+        public void increaseAge() {
+            if (age < MAX_AGE) {
+                age++;
+            }
+        }
+
+        public int getAge() {
+            return age;
+        }
+
+        public RadioConnection getConnection() {
+            return conn;
+        }
+
+        public int getMaxAge() {
+            return MAX_AGE;
+        }
+    }
+
 }
