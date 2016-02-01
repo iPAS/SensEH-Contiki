@@ -59,8 +59,10 @@ public class SensEHGUI extends VisPlugin {
         add(new JScrollPane(log));
 
         if (!QUIET) {
-            log.addMessage("Harvesting plugin started at (ms): " + simulation.getSimulationTimeMillis());
-            logger.info("Harvesting plugin started at (ms): " + simulation.getSimulationTimeMillis());
+            log.addMessage(
+                    "Harvesting plugin started at (ms): " + simulation.getSimulationTimeMillis());
+            logger.info(
+                    "Harvesting plugin started at (ms): " + simulation.getSimulationTimeMillis());
         }
         setSize(500, 200);
     }
