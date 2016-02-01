@@ -98,3 +98,6 @@ contiki-cc2530dk.lib
 *.testlog
 
 ipas/
+.pydevproject
+.settings/
+
