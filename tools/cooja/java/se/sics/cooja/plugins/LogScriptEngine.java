@@ -389,7 +389,7 @@ public class LogScriptEngine {
   private TimeEvent timeoutProgressEvent = new TimeEvent(0) {
     @Override
     public void execute(long t) {
-      nextProgress = t + timeout/20;
+      nextProgress = t + timeout/20;  // iPAS: <-- Percentage progress is NOT real!!
       simulation.scheduleEvent(this, nextProgress);
 
       double progress = 1.0*(t - startTime)/timeout;
