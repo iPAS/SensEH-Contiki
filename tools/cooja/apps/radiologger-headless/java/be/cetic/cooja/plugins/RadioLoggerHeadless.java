@@ -109,9 +109,10 @@ public class RadioLoggerHeadless extends VisPlugin {
                 RadioPacket radioTxPacket = conn.getSource().getLastPacketTransmitted();
 
                 /**
-                 * From receiver aspect
+                 * From receiver's view
                  * [iPAS]: xxx  */
-                for (Radio radioRx : conn.getAllDestinations()) {
+                //for (Radio radioRx : conn.getAllDestinations()) {  // All destination radios including interfered ones
+                for (Radio radioRx : conn.getDestinations()) {  // All non-interfered radios                  
                     //RadioPacket radioRxPacket = radioRx.getLastPacketReceived();  // It is always null !?
                     try {
                         int i = radioRx.getMote().getID() - 1;
@@ -123,7 +124,8 @@ public class RadioLoggerHeadless extends VisPlugin {
                 }
 
                 /**
-                 * From sender aspect  */
+                 * From sender's view 
+                 * [iPAS]: xxx  */
                 try {
                     pcapSendingExporter.exportPacketData( radioTxPacket.getPacketData() );
                 } catch (IOException e) {

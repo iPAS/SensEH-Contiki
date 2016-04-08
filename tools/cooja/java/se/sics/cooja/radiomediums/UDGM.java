@@ -81,12 +81,16 @@ import se.sics.cooja.plugins.skins.UDGMVisualizerSkin;
 public class UDGM extends AbstractRadioMedium {
     private static Logger logger = Logger.getLogger(UDGM.class);
 
-    public double SUCCESS_RATIO_TX   = 1.0; /* Success ratio of TX. If this fails, no radios receive the packet */
-    public double SUCCESS_RATIO_RX   = 1.0; /* Success ratio of RX. If this fails, the single affected receiver does not receive the packet */
+    public double SUCCESS_RATIO_TX   = 1.0; /* Success ratio of TX. If this fails,
+                                                no radios receive the packet */
+    public double SUCCESS_RATIO_RX   = 1.0; /* Success ratio of RX. If this fails,
+                                                the single affected
+                                                receiver does not receive the packet */
     public double TRANSMITTING_RANGE = 50;  /* Transmission range. */
-    public double INTERFERENCE_RANGE = 100; /* Interference range. Ignored if below transmission range. */
+    public double INTERFERENCE_RANGE = 100; /* Interference range.
+                                               Ignored if below transmission range. */
 
-    private DirectedGraphMedium dgrm;                     /* Used only for efficient destination lookup */
+    private DirectedGraphMedium dgrm;  /* Used only for efficient destination lookup */
 
     private Random random = null;
 
@@ -110,8 +114,8 @@ public class UDGM extends AbstractRadioMedium {
                         double distance = sourcePos.getDistanceTo(destPos);
                         if (distance < Math.max(TRANSMITTING_RANGE, INTERFERENCE_RANGE)) {
                             /* Add potential destination */
-                            addEdge(new DirectedGraphMedium.Edge(source, new DGRMDestinationRadio(
-                                    dest)));
+                            addEdge(new DirectedGraphMedium.Edge(
+                                                source, new DGRMDestinationRadio(dest)));
                         }
                     }
                 }
@@ -181,9 +185,11 @@ public class UDGM extends AbstractRadioMedium {
 
         /* Calculate ranges: grows with radio output power */
         double moteTransmissionRange = TRANSMITTING_RANGE *
-                ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
+                ((double) sender.getCurrentOutputPowerIndicator() /
+                 (double) sender.getOutputPowerIndicatorMax());
         double moteInterferenceRange = INTERFERENCE_RANGE *
-                ((double) sender.getCurrentOutputPowerIndicator() / (double) sender.getOutputPowerIndicatorMax());
+                ((double) sender.getCurrentOutputPowerIndicator() /
+                 (double) sender.getOutputPowerIndicatorMax());
 
         /* Get all potential destination radios */
         DestinationRadio[] potentialDestinations = dgrm.getPotentialDestinations(sender);
@@ -218,7 +224,7 @@ public class UDGM extends AbstractRadioMedium {
 //      }
 
             double distance = senderPos.getDistanceTo(recvPos);
-            if (distance <= moteTransmissionRange) { /* Within transmission range */
+            if (distance <= moteTransmissionRange) {  /* Within transmission range */
 
                 if (!recv.isRadioOn()) {
                     newConnection.addInterfered(recv);
@@ -299,8 +305,9 @@ public class UDGM extends AbstractRadioMedium {
                 conn.getSource().setCurrentSignalStrength(SS_STRONG);
             }
             for (Radio dstRadio : conn.getDestinations()) {
-                if (conn.getSource().getChannel() >= 0 && dstRadio.getChannel() >= 0
-                    && conn.getSource().getChannel() != dstRadio.getChannel()) {
+                if (conn.getSource().getChannel() >= 0 &&
+                    dstRadio.getChannel() >= 0 &&
+                    conn.getSource().getChannel() != dstRadio.getChannel()) {
                     continue;
                 }
 
@@ -395,7 +402,8 @@ public class UDGM extends AbstractRadioMedium {
             /* Backwards compatibility */
             if (element.getName().equals("success_ratio")) {
                 SUCCESS_RATIO_TX = Double.parseDouble(element.getText());
-                logger.warn("Loading old Cooja Config, XML element \"sucess_ratio\" parsed at \"sucess_ratio_tx\"");
+                logger.warn("Loading old Cooja Config," +
+                            " XML element \"sucess_ratio\" parsed at \"sucess_ratio_tx\"");
             }
 
             if (element.getName().equals("success_ratio_tx")) {
