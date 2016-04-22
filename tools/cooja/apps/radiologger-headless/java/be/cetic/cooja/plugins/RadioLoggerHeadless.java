@@ -37,6 +37,7 @@ import java.util.Properties;
 import java.util.Collection;
 import java.util.ArrayList;
 import java.io.File;
+import java.io.RandomAccessFile;
 
 import org.jdom.Element;
 
@@ -143,6 +144,26 @@ public class RadioLoggerHeadless extends VisPlugin {
     public void closePlugin() {
         if (radioMediumObserver != null)
             radioMedium.deleteRadioMediumObserver(radioMediumObserver);
+    }
+    
+    /** ***********************************************************************
+     * Restart statistical values
+     */
+    private void setZero(File f) {
+        try {
+            System.err.println("Clear PCAP file " + f.getName());
+            
+            RandomAccessFile raf = new RandomAccessFile(f, "rw");
+            raf.setLength(0);
+        } catch (Exception e) {
+            System.err.println("Exception on clearing" + e);
+        }        
+    }
+    
+    public void restartStatistics() {
+        setZero(pcapSendingExporter.pcapFile);        
+        for (int i = 0; i < motesCount; i++)
+            setZero(pcapReceivingExporter[i].pcapFile);
     }
 
     /** ***********************************************************************
