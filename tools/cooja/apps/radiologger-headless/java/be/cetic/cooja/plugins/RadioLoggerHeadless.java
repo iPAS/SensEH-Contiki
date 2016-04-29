@@ -124,8 +124,8 @@ public class RadioLoggerHeadless extends VisPlugin {
 
                 /**
                  * [iPAS]: From receiver's view  */
-                //for (Radio radioRx : conn.getAllDestinations()) {  // All destination radios including interfered ones
-                for (Radio radioRx : conn.getDestinations()) {  // All non-interfered radios
+                for (Radio radioRx : conn.getAllDestinations()) {  // All destination radios including interfered ones
+                //for (Radio radioRx : conn.getDestinations()) {  // All non-interfered radios
                     //RadioPacket radioRxPacket = radioRx.getLastPacketReceived();  // It is always null !?
                     try {
                         int i = radioRx.getMote().getID() - 1;
