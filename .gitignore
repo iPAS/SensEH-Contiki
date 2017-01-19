@@ -129,3 +129,13 @@ LOG_OPENOCD
 # nRF52 build artifacts
 *.jlink
 *.nrf52dk
+
+# My own files
+.cproject
+.project
+.pydevproject
+ipas.old/
+ipas/
+tools/cooja/apps/radiologger-headless/
+tools/cooja/apps/senseh/
+
