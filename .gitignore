@@ -138,4 +138,6 @@ ipas.old/
 ipas/
 tools/cooja/apps/radiologger-headless/
 tools/cooja/apps/senseh/
+tools/realsim
+tools/cooja/apps/realsim
 
