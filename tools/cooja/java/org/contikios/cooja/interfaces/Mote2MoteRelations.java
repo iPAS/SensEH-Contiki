@@ -135,7 +135,7 @@ public class Mote2MoteRelations extends MoteInterface {
         ((Log)mi).deleteObserver(logObserver);
       }
     }
-    logObserver = null;
+    //logObserver = null;  // [iPAS]: Why do we need to destroy it?
 
     /* Remove all relations to other motes */
     Mote[] relationsArr = relations.toArray(new Mote[0]);

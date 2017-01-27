@@ -277,7 +277,7 @@ public class Simulation extends Observable implements Runnable {
           throw new RuntimeException("Next event is in the past: " + nextEvent.time + " < " + currentSimulationTime + ": " + nextEvent);
         }
         currentSimulationTime = nextEvent.time;
-        /*logger.info("Executing event #" + EVENT_COUNTER++ + " @ " + currentSimulationTime + ": " + nextEvent);*/
+        //logger.debug("Executing event:" + nextEvent.name + " @" + currentSimulationTime + ": " + nextEvent);  // [iPAS]:
         nextEvent.execute(currentSimulationTime);
 
         if (stopSimulation) {
