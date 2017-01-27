@@ -114,7 +114,7 @@ public class MoteAttributes extends MoteInterface {
         ((Log)mi).deleteObserver(logObserver);
       }
     }
-    logObserver = null;
+    //logObserver = null;  // [iPAS]: Why do we need to destroy it? 
   }
 
   private void handleNewLog(String msg) {
