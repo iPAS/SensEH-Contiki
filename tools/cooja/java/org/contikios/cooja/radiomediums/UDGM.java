@@ -87,10 +87,10 @@ public class UDGM extends AbstractRadioMedium {
   public double TRANSMITTING_RANGE = 50; /* Transmission range. */
   public double INTERFERENCE_RANGE = 100; /* Interference range. Ignored if below transmission range. */
   
-  public long intf_count = 0; // iPAS: count all interference
-  public long intf_off = 0;   // iPAS: count an interference due to a transceiver is off
-  public long intf_col = 0;   // iPAS: count an interference due to collision
-  public long intf_area = 0;  // iPAS: count an interference due to be within a radiation area
+  public long intf_count = 0; // [iPAS]: count all interference
+  public long intf_off = 0;   // [iPAS]: count an interference due to a transceiver is off
+  public long intf_col = 0;   // [iPAS]: count an interference due to collision
+  public long intf_area = 0;  // [iPAS]: count an interference due to being within a radiation area
   
   private DirectedGraphMedium dgrm; /* Used only for efficient destination lookup */
 
@@ -190,7 +190,7 @@ public class UDGM extends AbstractRadioMedium {
 
     /* Loop through all potential destinations */
     Position senderPos = sender.getPosition();
-    for (DestinationRadio dest: potentialDestinations) { // iPAS: How SENDER affect to RECVs
+    for (DestinationRadio dest: potentialDestinations) {  // [iPAS]: How SENDER affect to RECVs
       Radio recv = dest.radio;
 
       /* Fail if radios are on different (but configured) channels */ 
@@ -229,7 +229,9 @@ public class UDGM extends AbstractRadioMedium {
         if (!recv.isRadioOn()) {
           newConnection.addInterfered(recv);
           recv.interfereAnyReception();
-          intf_count++; intf_off++; // logger.debug("Interfered due to radio off (" + intf_off + "/" + intf_count + ")"); // iPAS          
+          
+          intf_count++; intf_off++; //logger.debug("Interfered due to radio off (" + intf_off + "/" + intf_count + ")");  // [iPAS]:
+
         } else if (recv.isInterfered()) {
           /* Was interfered: keep interfering */
           newConnection.addInterfered(recv);
@@ -240,7 +242,8 @@ public class UDGM extends AbstractRadioMedium {
           /* Was receiving, or reception failed: start interfering */
           newConnection.addInterfered(recv);
           recv.interfereAnyReception();
-          intf_count++; intf_col++; // logger.debug("Interfered due to collision or noise (" + intf_col + "/" + intf_count + ")"); // iPAS          
+
+          intf_count++; intf_col++; //logger.debug("Interfered due to collision or noise (" + intf_col + "/" + intf_count + ")");  // [iPAS]:          
             
           /* Interfere receiver in all other active radio connections */
           for (RadioConnection conn : getActiveConnections()) {
@@ -254,10 +257,12 @@ public class UDGM extends AbstractRadioMedium {
           newConnection.addDestination(recv);
         }
       } else if (distance <= moteInterferenceRange) {
-            /* Within interference range */
-            newConnection.addInterfered(recv);
-            recv.interfereAnyReception();
-            intf_count++; intf_area++; // logger.debug("Interfered within intference area (" + intf_area + "/" + intf_count + ")"); // iPAS
+        /* Within interference range */
+        newConnection.addInterfered(recv);
+        recv.interfereAnyReception();
+        
+        intf_count++; intf_area++; //logger.debug("Interfered within intference area (" + intf_area + "/" + intf_count + ")");  // [iPAS]:
+
       }
     }
 
