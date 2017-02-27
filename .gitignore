@@ -143,3 +143,5 @@ tools/cooja/apps/radiologger-headless/
 tools/cooja/apps/realsim
 tools/cooja/apps/senseh/
 
+tools/realsim/
+tools/radio-sim/
