@@ -134,11 +134,14 @@ LOG_OPENOCD
 .cproject
 .project
 .pydevproject
-ipas.old/
-ipas/
+
+project_jica-2017/
+project_phd-thesis/
+project_wsn-lecture-2017/
+
 tools/cooja/apps/radiologger-headless/
-tools/cooja/apps/senseh/
 tools/cooja/apps/realsim
+tools/cooja/apps/senseh/
 
 tools/realsim/
 tools/radio-sim/
