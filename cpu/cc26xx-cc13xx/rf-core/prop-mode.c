@@ -71,8 +71,8 @@
 #include "rf-core/api/prop_cmd.h"
 /*---------------------------------------------------------------------------*/
 /* CC13xxware patches */
-//#include "rf_patches/rf_patch_cpe_genfsk.h"
-#include "rf_patches/rf_patch_cpe_lrm.h"  // iPAS:
+#include "rf_patches/rf_patch_cpe_genfsk.h"
+//#include "rf_patches/rf_patch_cpe_lrm.h"  // iPAS:
 /*---------------------------------------------------------------------------*/
 #include "rf-core/smartrf-settings.h"
 /*---------------------------------------------------------------------------*/
@@ -892,8 +892,8 @@ on(void)
       return RF_CORE_CMD_ERROR;
     }
 
-    //rf_patch_cpe_genfsk();
-    rf_patch_cpe_lrm(); // iPAS:
+    rf_patch_cpe_genfsk();
+//    rf_patch_cpe_lrm(); // iPAS:
 
     if(rf_core_start_rat() != RF_CORE_CMD_OK) {
       PRINTF("on: rf_core_start_rat() failed\n");

@@ -61,67 +61,6 @@ uint32_t overrides[] =
   (uint32_t)0x963,
 
   (uint32_t)0xFFFFFFFF,
-
-
-  /* -------------------------------------------- */
-  /**
-   * Generated from SmartRF
-   */
-  // override_use_patch_prop_lrm.xml
-  // PHY: Use MCE ROM bank 3, RFE RAM patch
-  MCE_RFE_OVERRIDE(0,3,0,1,0,0),
-
-  // override_synth_prop_863_930_div5.xml
-  // Synth: Set recommended RTRIM to 7
-  HW_REG_OVERRIDE(0x4038,0x0037),
-  // Synth: Set Fref to 4 MHz
-  (uint32_t)0x000684A3,
-  // Synth: Configure fine calibration setting
-  HW_REG_OVERRIDE(0x4020,0x7F00),
-  // Synth: Configure fine calibration setting
-  HW_REG_OVERRIDE(0x4064,0x0040),
-  // Synth: Configure fine calibration setting
-  (uint32_t)0xB1070503,
-  // Synth: Configure fine calibration setting
-  (uint32_t)0x05330523,
-  // Synth: Set loop bandwidth after lock to 20 kHz
-  (uint32_t)0x0A480583,
-  // Synth: Set loop bandwidth after lock to 20 kHz
-  (uint32_t)0x7AB80603,
-  // Synth: Configure VCO LDO (in ADI1, set VCOLDOCFG=0x9F to use voltage input reference)
-  ADI_REG_OVERRIDE(1,4,0x9F),
-  // Synth: Configure synth LDO (in ADI1, set SLDOCTL0.COMP_CAP=1)
-  ADI_HALFREG_OVERRIDE(1,7,0x4,0x4),
-  // Synth: Use 24 MHz XOSC as synth clock, enable extra PLL filtering
-  (uint32_t)0x02010403,
-  // Synth: Configure extra PLL filtering
-  (uint32_t)0x00108463,
-  // Synth: Increase synth programming timeout (0x04B0 RAT ticks = 300 us)
-  (uint32_t)0x04B00243,
-  // override_phy_rx_aaf_bw_0xd.xml
-  // Rx: Set anti-aliasing filter bandwidth to 0xD (in ADI0, set IFAMPCTL3[7:4]=0xD)
-  ADI_HALFREG_OVERRIDE(0,61,0xF,0xD),
-  // override_phy_gfsk_rx.xml
-  // Rx: Set LNA bias current trim offset to 3
-  (uint32_t)0x00038883,
-  // Rx: Freeze RSSI on sync found event
-  HW_REG_OVERRIDE(0x6084,0x35F1),
-  // override_phy_gfsk_pa_ramp_agc_reflevel_0x1a.xml
-  // Tx: Enable PA ramping (0x41). Rx: Set AGC reference level to 0x1A.
-  HW_REG_OVERRIDE(0x6088,0x411A),
-  // Tx: Configure PA ramping setting
-  HW_REG_OVERRIDE(0x608C,0x8213),
-
-  // override_phy_lrm_rom_dsss8.xml
-  // PHY: Configure DSSS=8
-  HW_REG_OVERRIDE(0x505C,0x073C),
-  // override_phy_rx_rssi_offset_5db.xml
-  // Rx: Set RSSI offset to adjust reported RSSI by +5 dB
-  (uint32_t)0x00FB88A3,
-  // TX power override
-  // Tx: Set PA trim to max (in ADI0, set PACTL0=0xF8)
-  ADI_REG_OVERRIDE(0,12,0xF8),
-  (uint32_t)0xFFFFFFFF,
 };
 /*---------------------------------------------------------------------------*/
 /* CMD_PROP_RADIO_DIV_SETUP */
@@ -129,7 +68,7 @@ rfc_CMD_PROP_RADIO_DIV_SETUP_t smartrf_settings_cmd_prop_radio_div_setup =
 {
   .commandNo = 0x3807,
   .status = 0x0000,
-  .pNextOp = 0, // INSERT APPLICABLE POINTER: (uint8_t*)&xxx
+  .pNextOp = 0,
   .startTime = 0x00000000,
   .startTrigger.triggerType = 0x0,
   .startTrigger.bEnaCmd = 0x0,
@@ -137,54 +76,27 @@ rfc_CMD_PROP_RADIO_DIV_SETUP_t smartrf_settings_cmd_prop_radio_div_setup =
   .startTrigger.pastTrig = 0x0,
   .condition.rule = 0x1,
   .condition.nSkip = 0x0,
-
-  //.modulation.modType = 0x1,  // GFSK
-  .modulation.modType = 0x0,  // FSK
-  //.modulation.deviation = 0x64,
-  .modulation.deviation = 0x14,  // 250x20 Hz
-
-  .symbolRate.preScale = 0xF,
-
-  //.symbolRate.rateWord = 0x8000,
-  .symbolRate.rateWord = 0x199A,  // 6554: (24e6/preScale:15/2^20)*6554 = 10,000 --> Symbol rate
-                                  //        10000 /2 /8 = 625 Hz --> Baud rate
-  //.rxBw = 0x24,
-  .rxBw = 0x20,  // Receiver bandwidth: 32 --> 45kHz with 250kHz intermediate freq.
-
-  //.preamConf.nPreamBytes = 0x3,
-  .preamConf.nPreamBytes = 0x5,
-
+  .modulation.modType = 0x1,
+  .modulation.deviation = 0x64,
+  .symbolRate.preScale = 0xf,
+  .symbolRate.rateWord = 0x8000,
+  .rxBw = 0x24,
+  .preamConf.nPreamBytes = 0x3,
   .preamConf.preamMode = 0x0,
-
-  //.formatConf.nSwBits = 0x18,
-  .formatConf.nSwBits = 0x20,  // Number of sync words
-
+  .formatConf.nSwBits = 0x18,
   .formatConf.bBitReversal = 0x0,
+  .formatConf.bMsbFirst = 0x1,
+  .formatConf.fecMode = 0x0,
 
-  //.formatConf.bMsbFirst = 0x1,  // MSB first
-  .formatConf.bMsbFirst = 0x0,  // LSB first
-  //.formatConf.fecMode = 0x0,
-  .formatConf.fecMode = 0x8,  // 0x8: A hidden feature? @see
-                              //       https://e2e.ti.com/support/wireless_connectivity/proprietary_sub_1_ghz_simpliciti/f/156/p/509875/1853237#1853237
-                              // 0xA: Manchester coded binary modulation (only CC13xx FSK/GFSK)
-
-  //.formatConf.whitenMode = 0x7,  // 111: Dynamically IEEE 802.15.4g compatible whitener and 16-bit or 32-bit CRC (only CC13xx)
-  .formatConf.whitenMode = 0x0,
-
+  /* 7: .4g mode with dynamic whitening and CRC choice */
+  .formatConf.whitenMode = 0x7,
   .config.frontEndMode = 0x0, /* Differential mode */
   .config.biasMode = 0x1,     /* External bias*/
-  .config.analogCfgMode = 0x0,
   .config.bNoFsPowerUp = 0x0,
-
-  //.txPower = 0x00, /* Driver sets correct value */
-  .txPower = 0xA73F,  // 14 dBm
-
+  .txPower = 0x00, /* Driver sets correct value */
   .pRegOverride = overrides,
   .intFreq = 0x8000,
-
-  //.centerFreq = 868,
-  .centerFreq = 915,
-
+  .centerFreq = 868,
   .loDivider = 0x05,
 };
 /*---------------------------------------------------------------------------*/
@@ -193,7 +105,7 @@ rfc_CMD_FS_t smartrf_settings_cmd_fs =
 {
   .commandNo = 0x0803,
   .status = 0x0000,
-  .pNextOp = 0,  // INSERT APPLICABLE POINTER: (uint8_t*)&xxx
+  .pNextOp = 0,
   .startTime = 0x00000000,
   .startTrigger.triggerType = 0x0,
   .startTrigger.bEnaCmd = 0x0,
@@ -201,16 +113,13 @@ rfc_CMD_FS_t smartrf_settings_cmd_fs =
   .startTrigger.pastTrig = 0x0,
   .condition.rule = 0x1,
   .condition.nSkip = 0x0,
-
-  //.frequency = 868,
-  .frequency = 915,
-
+  .frequency = 868,
   .fractFreq = 0x0000,
   .synthConf.bTxMode = 0x0,
   .synthConf.refFreq = 0x0,
-  .__dummy0  = 0x00,
+  .__dummy0 = 0x00,
   .midPrecal = 0x00,
-  .ktPrecal  = 0x00,
+  .ktPrecal = 0x00,
   .tdcPrecal = 0x0000,
 };
 /*---------------------------------------------------------------------------*/
@@ -219,7 +128,7 @@ rfc_CMD_PROP_TX_ADV_t smartrf_settings_cmd_prop_tx_adv =
 {
   .commandNo = 0x3803,
   .status = 0x0000,
-  .pNextOp = 0,  // INSERT APPLICABLE POINTER: (uint8_t*)&xxx
+  .pNextOp = 0,
   .startTime = 0x00000000,
   .startTrigger.triggerType = 0x0,
   .startTrigger.bEnaCmd = 0x0,
@@ -229,8 +138,7 @@ rfc_CMD_PROP_TX_ADV_t smartrf_settings_cmd_prop_tx_adv =
   .condition.nSkip = 0x0,
   .pktConf.bFsOff = 0x0,
   .pktConf.bUseCrc = 0x1,
-
-  .pktConf.bCrcIncSw  = 0x0, /* .4g mode */
+  .pktConf.bCrcIncSw = 0x0, /* .4g mode */
   .pktConf.bCrcIncHdr = 0x0, /* .4g mode */
   .numHdrBits = 0x10 /* 16: .4g mode */,
   .pktLen = 0x0000,
@@ -251,7 +159,7 @@ rfc_CMD_PROP_RX_ADV_t smartrf_settings_cmd_prop_rx_adv =
 {
   .commandNo = 0x3804,
   .status = 0x0000,
-  .pNextOp = 0,  // INSERT APPLICABLE POINTER: (uint8_t*)&xxx
+  .pNextOp = 0,
   .startTime = 0x00000000,
   .startTrigger.triggerType = 0x0,
   .startTrigger.bEnaCmd = 0x0,
