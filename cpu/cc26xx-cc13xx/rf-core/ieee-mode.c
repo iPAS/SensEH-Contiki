@@ -56,6 +56,7 @@
 #include "lpm.h"
 #include "ti-lib.h"
 #include "rf-core/rf-core.h"
+#include "rf-core/rf-switch.h"
 #include "rf-core/rf-ble.h"
 /*---------------------------------------------------------------------------*/
 /* RF core and RF HAL API */
@@ -63,11 +64,11 @@
 #include "hw_rfc_pwr.h"
 /*---------------------------------------------------------------------------*/
 /* RF Core Mailbox API */
-#include "rf-core/api/mailbox.h"
-#include "rf-core/api/common_cmd.h"
 #include "rf-core/api/ieee_cmd.h"
-#include "rf-core/api/data_entry.h"
 #include "rf-core/api/ieee_mailbox.h"
+#include "driverlib/rf_mailbox.h"
+#include "driverlib/rf_common_cmd.h"
+#include "driverlib/rf_data_entry.h"
 /*---------------------------------------------------------------------------*/
 #include "smartrf-settings.h"
 /*---------------------------------------------------------------------------*/
@@ -167,25 +168,23 @@ static uint8_t rf_stats[16] = { 0 };
 /* TX Power dBm lookup table - values from SmartRF Studio */
 typedef struct output_config {
   radio_value_t dbm;
-  uint8_t register_ib;
-  uint8_t register_gc;
-  uint8_t temp_coeff;
+  uint16_t tx_power; /* Value for the CMD_RADIO_SETUP.txPower field */
 } output_config_t;
 
 static const output_config_t output_power[] = {
-  {  5, 0x30, 0x00, 0x93 },
-  {  4, 0x24, 0x00, 0x93 },
-  {  3, 0x1c, 0x00, 0x5a },
-  {  2, 0x18, 0x00, 0x4e },
-  {  1, 0x14, 0x00, 0x42 },
-  {  0, 0x21, 0x01, 0x31 },
-  { -3, 0x18, 0x01, 0x25 },
-  { -6, 0x11, 0x01, 0x1d },
-  { -9, 0x0e, 0x01, 0x19 },
-  {-12, 0x0b, 0x01, 0x14 },
-  {-15, 0x0b, 0x03, 0x0c },
-  {-18, 0x09, 0x03, 0x0c },
-  {-21, 0x07, 0x03, 0x0c },
+  {  5, 0x9330 },
+  {  4, 0x9324 },
+  {  3, 0x5a1c },
+  {  2, 0x4e18 },
+  {  1, 0x4214 },
+  {  0, 0x3161 },
+  { -3, 0x2558 },
+  { -6, 0x1d52 },
+  { -9, 0x194e },
+  {-12, 0x144b },
+  {-15, 0x0ccb },
+  {-18, 0x0cc9 },
+  {-21, 0x0cc7 },
 };
 
 #define OUTPUT_CONFIG_COUNT (sizeof(output_power) / sizeof(output_config_t))
@@ -262,6 +261,12 @@ volatile static uint8_t *rx_read_entry;
 
 static uint8_t tx_buf[TX_BUF_HDR_LEN + TX_BUF_PAYLOAD_LEN] CC_ALIGN(4);
 /*---------------------------------------------------------------------------*/
+#ifdef IEEE_MODE_CONF_BOARD_OVERRIDES
+#define IEEE_MODE_BOARD_OVERRIDES IEEE_MODE_CONF_BOARD_OVERRIDES
+#else
+#define IEEE_MODE_BOARD_OVERRIDES
+#endif
+/*---------------------------------------------------------------------------*/
 /* Overrides for IEEE 802.15.4, differential mode */
 static uint32_t ieee_overrides[] = {
   0x00354038, /* Synth: Set RTRIM (POTAILRESTRIM) to 5 */
@@ -276,6 +281,7 @@ static uint32_t ieee_overrides[] = {
   0x002B50DC, /* Adjust AGC DC filter */
   0x05000243, /* Increase synth programming timeout */
   0x002082C3, /* Increase synth programming timeout */
+  IEEE_MODE_BOARD_OVERRIDES
   0xFFFFFFFF, /* End of override list */
 };
 /*---------------------------------------------------------------------------*/
@@ -456,9 +462,7 @@ set_tx_power(radio_value_t power)
 
   memset(&cmd, 0x00, sizeof(cmd));
   cmd.commandNo = CMD_SET_TX_POWER;
-  cmd.txPower.IB = output_power[i].register_ib;
-  cmd.txPower.GC = output_power[i].register_gc;
-  cmd.txPower.tempCoeff = output_power[i].temp_coeff;
+  cmd.txPower = output_power[i].tx_power;
 
   if(rf_core_send_cmd((uint32_t)&cmd, &cmd_status) == RF_CORE_CMD_ERROR) {
     PRINTF("set_tx_power: CMDSTA=0x%08lx\n", cmd_status);
@@ -471,13 +475,15 @@ rf_radio_setup()
   uint32_t cmd_status;
   rfc_CMD_RADIO_SETUP_t cmd;
 
+  rf_switch_select_path(RF_SWITCH_PATH_2_4GHZ);
+
   /* Create radio setup command */
   rf_core_init_radio_op((rfc_radioOp_t *)&cmd, sizeof(cmd), CMD_RADIO_SETUP);
 
-  cmd.txPower.IB = tx_power_current->register_ib;
-  cmd.txPower.GC = tx_power_current->register_gc;
-  cmd.txPower.tempCoeff = tx_power_current->temp_coeff;
+  cmd.txPower = tx_power_current->tx_power;
   cmd.pRegOverride = ieee_overrides;
+  cmd.config.frontEndMode = RF_CORE_RADIO_SETUP_FRONT_END_MODE;
+  cmd.config.biasMode = RF_CORE_RADIO_SETUP_BIAS_MODE;
   cmd.mode = 1;
 
   /* Send Radio setup to RF Core */

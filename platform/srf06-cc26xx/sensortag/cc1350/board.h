@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (c) 2014, Texas Instruments Incorporated - http://www.ti.com/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,22 +28,25 @@
  * OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*---------------------------------------------------------------------------*/
-/** \addtogroup launchpad-peripherals
+/** \addtogroup cc26xx-srf-tag
  * @{
  *
- * \defgroup launchpad-cc26xx-specific CC2650 LaunchPad Peripherals
+ * \defgroup sensortag-cc13xx-peripherals CC1350 Sensortag Peripherals
  *
- * Defines related to the CC2650 LaunchPad
+ * Defines related to the CC1350 Sensortag
  *
  * This file provides connectivity information on LEDs, Buttons, UART and
  * other peripherals
+ *
+ * This file can be used as the basis to configure other boards using the
+ * CC13xx code as their basis.
  *
  * This file is not meant to be modified by the user.
  * @{
  *
  * \file
  * Header file with definitions related to the I/O connections on the TI
- * CC2650 LaunchPad
+ * Sensortag
  *
  * \note   Do not include this file directly. It gets included by contiki-conf
  *         after all relevant directives have been set.
@@ -68,11 +71,11 @@
 #undef LEDS_CONF_ALL
 
 #define LEDS_RED       1
-#define LEDS_GREEN     2
-#define LEDS_YELLOW    LEDS_GREEN
+#define LEDS_GREEN     LEDS_RED
+#define LEDS_YELLOW    LEDS_RED
 #define LEDS_ORANGE    LEDS_RED
 
-#define LEDS_CONF_ALL  3
+#define LEDS_CONF_ALL  1
 
 /* Notify various examples that we have LEDs */
 #define PLATFORM_HAS_LEDS        1
@@ -84,11 +87,9 @@
  * Those values are not meant to be modified by the user
  * @{
  */
-#define BOARD_IOID_LED_1          IOID_6
-#define BOARD_IOID_LED_2          IOID_7
+#define BOARD_IOID_LED_1          IOID_10
 #define BOARD_LED_1               (1 << BOARD_IOID_LED_1)
-#define BOARD_LED_2               (1 << BOARD_IOID_LED_2)
-#define BOARD_LED_ALL             (BOARD_LED_1 | BOARD_LED_2)
+#define BOARD_LED_ALL             BOARD_LED_1
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
@@ -97,14 +98,23 @@
  * Those values are not meant to be modified by the user
  * @{
  */
-#define BOARD_IOID_UART_RX        IOID_2
-#define BOARD_IOID_UART_TX        IOID_3
-#define BOARD_IOID_UART_RTS       IOID_18
-#define BOARD_IOID_UART_CTS       IOID_19
+#define BOARD_IOID_DP4_UARTRX     IOID_28
+#define BOARD_IOID_DP5_UARTTX     IOID_29
+
+#if BOARD_CONF_DEBUGGER_DEVPACK
+#define BOARD_IOID_UART_RX        BOARD_IOID_DP4_UARTRX
+#define BOARD_IOID_UART_TX        BOARD_IOID_DP5_UARTTX
+#else
+#define BOARD_IOID_UART_RX        IOID_17
+#define BOARD_IOID_UART_TX        IOID_16
+#endif
+
+#define BOARD_IOID_UART_CTS       IOID_UNUSED
+#define BOARD_IOID_UART_RTS       IOID_UNUSED
 #define BOARD_UART_RX             (1 << BOARD_IOID_UART_RX)
 #define BOARD_UART_TX             (1 << BOARD_IOID_UART_TX)
-#define BOARD_UART_RTS            (1 << BOARD_IOID_UART_RTS)
 #define BOARD_UART_CTS            (1 << BOARD_IOID_UART_CTS)
+#define BOARD_UART_RTS            (1 << BOARD_IOID_UART_RTS)
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
@@ -113,8 +123,8 @@
  * Those values are not meant to be modified by the user
  * @{
  */
-#define BOARD_IOID_KEY_LEFT       IOID_13
-#define BOARD_IOID_KEY_RIGHT      IOID_14
+#define BOARD_IOID_KEY_LEFT       IOID_15
+#define BOARD_IOID_KEY_RIGHT      IOID_4
 #define BOARD_KEY_LEFT            (1 << BOARD_IOID_KEY_LEFT)
 #define BOARD_KEY_RIGHT           (1 << BOARD_IOID_KEY_RIGHT)
 /** @} */
@@ -125,19 +135,35 @@
  * Those values are not meant to be modified by the user
  * @{
  */
-#define BOARD_IOID_SPI_MOSI       IOID_9
-#define BOARD_IOID_SPI_MISO       IOID_8
+#define BOARD_IOID_SPI_MOSI       IOID_19
+#define BOARD_IOID_SPI_MISO       IOID_18
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
- * \name External flash IOID mapping
+ * \name Buzzer configuration
+ * @{
+ */
+#define BOARD_IOID_BUZZER         IOID_21 /**< Buzzer Pin */
+/** @} */
+/*---------------------------------------------------------------------------*/
+/**
+ * \name Reed Relay IOID mapping
  *
  * Those values are not meant to be modified by the user
  * @{
  */
-#define BOARD_IOID_FLASH_CS       IOID_20
+#define BOARD_IOID_REED_RELAY     IOID_1
+/** @} */
+/*---------------------------------------------------------------------------*/
+/**
+ * \name External flash IOID mapping and part-related constants
+ *
+ * Those values are not meant to be modified by the user
+ * @{
+ */
+#define BOARD_IOID_FLASH_CS       IOID_14
 #define BOARD_FLASH_CS            (1 << BOARD_IOID_FLASH_CS)
-#define BOARD_IOID_SPI_CLK_FLASH  IOID_10
+#define BOARD_IOID_SPI_CLK_FLASH  IOID_17
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
@@ -146,71 +172,101 @@
  * Those values are not meant to be modified by the user
  * @{
  */
-#define BOARD_IOID_SCL            IOID_4
-#define BOARD_IOID_SDA            IOID_5
+#define BOARD_IOID_SDA            IOID_5 /**< Interface 0 SDA: All sensors bar MPU */
+#define BOARD_IOID_SCL            IOID_6 /**< Interface 0 SCL: All sensors bar MPU */
+#define BOARD_IOID_SDA_HP         IOID_8 /**< Interface 1 SDA: MPU */
+#define BOARD_IOID_SCL_HP         IOID_9 /**< Interface 1 SCL: MPU */
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
- * \brief ROM bootloader configuration
- *
- * Change SET_CCFG_BL_CONFIG_BL_PIN_NUMBER to BOARD_IOID_KEY_xyz to select
- * which button triggers the bootloader on reset.
- *
- * The remaining values are not meant to be modified by the user
- * @{
- */
-#if ROM_BOOTLOADER_ENABLE
-#define SET_CCFG_BL_CONFIG_BOOTLOADER_ENABLE            0xC5
-#define SET_CCFG_BL_CONFIG_BL_LEVEL                     0x00
-#define SET_CCFG_BL_CONFIG_BL_PIN_NUMBER                BOARD_IOID_KEY_LEFT
-#define SET_CCFG_BL_CONFIG_BL_ENABLE                    0xC5
-#else
-#define SET_CCFG_BL_CONFIG_BOOTLOADER_ENABLE            0x00
-#define SET_CCFG_BL_CONFIG_BL_LEVEL                     0x01
-#define SET_CCFG_BL_CONFIG_BL_PIN_NUMBER                0xFF
-#define SET_CCFG_BL_CONFIG_BL_ENABLE                    0xFF
-#endif
-/** @} */
-/*---------------------------------------------------------------------------*/
-/**
- * \brief Remaining pins
+ * \brief MPU IOID mappings
  *
  * Those values are not meant to be modified by the user
  * @{
  */
-#define BOARD_IOID_DIO0           IOID_0
-#define BOARD_IOID_DIO1           IOID_1
-#define BOARD_IOID_CS             IOID_11
-#define BOARD_IOID_TDO            IOID_16
-#define BOARD_IOID_TDI            IOID_17
-#define BOARD_IOID_DIO12          IOID_12
-#define BOARD_IOID_DIO15          IOID_15
-#define BOARD_IOID_DIO21          IOID_21
-#define BOARD_IOID_DIO22          IOID_22
-#define BOARD_IOID_DIO23          IOID_23
-#define BOARD_IOID_DIO24          IOID_24
-#define BOARD_IOID_DIO25          IOID_25
-#define BOARD_IOID_DIO26          IOID_26
-#define BOARD_IOID_DIO27          IOID_27
-#define BOARD_IOID_DIO28          IOID_28
-#define BOARD_IOID_DIO29          IOID_29
-#define BOARD_IOID_DIO30          IOID_30
+#define BOARD_IOID_MPU_INT        IOID_7
+#define BOARD_IOID_MPU_POWER      IOID_12
+#define BOARD_MPU_INT             (1 << BOARD_IOID_MPU_INT)
+#define BOARD_MPU_POWER           (1 << BOARD_IOID_MPU_POWER)
+/** @} */
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief Board devpack IOID mappings (LCD etc.)
+ *
+ * Those values are not meant to be modified by the user
+ * @{
+ */
+#define BOARD_IOID_AUDIOFS_TDO        IOID_16
+#define BOARD_IOID_DEVPACK_CS         IOID_20
+#define BOARD_IOID_DEVPK_LCD_EXTCOMIN IOID_22
+#define BOARD_IOID_AUDIODO            IOID_22
+#define BOARD_IOID_DP2                IOID_23
+#define BOARD_IOID_DP1                IOID_24
+#define BOARD_IOID_DP0                IOID_25
+#define BOARD_IOID_DP3                IOID_27
+#define BOARD_IOID_DEVPK_ID           IOID_30
+#define BOARD_DEVPACK_CS              (1 << BOARD_IOID_DEVPACK_CS)
+/** @} */
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief TMP Sensor
+ *
+ * Those values are not meant to be modified by the user
+ * @{
+ */
+#define BOARD_IOID_TMP_RDY          IOID_11
+/** @} */
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief Digital Microphone
+ *
+ * Those values are not meant to be modified by the user
+ * @{
+ */
+#define BOARD_IOID_MIC_POWER        IOID_13
+#define BOARD_IOID_AUDIO_DI         IOID_2
+#define BOARD_IOID_AUDIO_CLK        IOID_3
+/** @} */
+/*---------------------------------------------------------------------------*/
+/**
+ * \name RF Front End configuration
+ *
+ * Those values are not meant to be modified by the user
+ * @{
+ */
+#define RF_CORE_CONF_RADIO_SETUP_FRONT_END_MODE 0x01 /* Single-Ended, RFP */
+#define RF_CORE_CONF_RADIO_SETUP_BIAS_MODE      0x01 /* External */
+#define RF_CORE_CONF_PROP_FRONT_END_MODE        0x02 /* Single-Ended, RFN */
+#define RF_CORE_CONF_PROP_BIAS_MODE             0x01 /* External */
+/** @} */
+/*---------------------------------------------------------------------------*/
+/**
+ * \name Board-specific overrides
+ *
+ * Those values are not meant to be modified by the user
+ * @{
+ */
+#define IEEE_MODE_CONF_BOARD_OVERRIDES        ADI_HALFREG_OVERRIDE(0, 16, 0x7, 1),
+#define RF_BLE_CONF_BOARD_OVERRIDES           ADI_HALFREG_OVERRIDE(0, 16, 0x7, 1),
+#define SMARTRF_SETTINGS_CONF_BOARD_OVERRIDES ADI_HALFREG_OVERRIDE(0, 16, 0x7, 2),
 
-#define BOARD_UNUSED_PINS { \
-    BOARD_IOID_DIO0, BOARD_IOID_DIO1, BOARD_IOID_CS, BOARD_IOID_TDO, \
-    BOARD_IOID_TDI, BOARD_IOID_DIO12, BOARD_IOID_DIO15, BOARD_IOID_DIO21, \
-    BOARD_IOID_DIO22, BOARD_IOID_DIO23, BOARD_IOID_DIO24, BOARD_IOID_DIO25, \
-    BOARD_IOID_DIO26, BOARD_IOID_DIO27, BOARD_IOID_DIO28, BOARD_IOID_DIO29, \
-    BOARD_IOID_DIO30, IOID_UNUSED \
-  }
+#define SMARTRF_SETTINGS_CONF_RSSI_OFFSET_779_930  0x00F688A3
+#define SMARTRF_SETTINGS_CONF_OVERRIDE_TRIM_OFFSET 0x00018883
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
  * \name Device string used on startup
  * @{
  */
-#define BOARD_STRING "TI CC2650 LaunchPad"
+#define BOARD_STRING "TI CC1350 SensorTag"
 
+/** @} */
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief Board specific iniatialisation
+ * @{
+ */
+void board_init(void);
 /** @} */
 /*---------------------------------------------------------------------------*/
 #endif /* BOARD_H_ */

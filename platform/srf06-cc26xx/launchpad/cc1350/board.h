@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, Texas Instruments Incorporated - http://www.ti.com/
+ * Copyright (c) 2016, Texas Instruments Incorporated - http://www.ti.com/
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,9 +31,9 @@
 /** \addtogroup launchpad-peripherals
  * @{
  *
- * \defgroup launchpad-cc26xx-specific CC2650 LaunchPad Peripherals
+ * \defgroup launchpad-cc1350-specific CC1350 LaunchPad Peripherals
  *
- * Defines related to the CC2650 LaunchPad
+ * Defines related to the CC1350 LaunchPad
  *
  * This file provides connectivity information on LEDs, Buttons, UART and
  * other peripherals
@@ -43,7 +43,7 @@
  *
  * \file
  * Header file with definitions related to the I/O connections on the TI
- * CC2650 LaunchPad
+ * CC1350 LaunchPad
  *
  * \note   Do not include this file directly. It gets included by contiki-conf
  *         after all relevant directives have been set.
@@ -151,6 +151,24 @@
 /** @} */
 /*---------------------------------------------------------------------------*/
 /**
+ * \brief CC1350LP RF Switch
+ *
+ * Those values are not meant to be modified by the user
+ * @{
+ */
+#define RF_SWITCH_CONF_ENABLE     1
+/** @} */
+/*---------------------------------------------------------------------------*/
+/**
+ * \brief TX power settings
+ *
+ * Those values are not meant to be modified by the user
+ * @{
+ */
+#define PROP_MODE_CONF_TX_POWER_779_930 tx_power_driver_779_930
+/** @} */
+/*---------------------------------------------------------------------------*/
+/**
  * \brief ROM bootloader configuration
  *
  * Change SET_CCFG_BL_CONFIG_BL_PIN_NUMBER to BOARD_IOID_KEY_xyz to select
@@ -178,8 +196,6 @@
  * Those values are not meant to be modified by the user
  * @{
  */
-#define BOARD_IOID_DIO0           IOID_0
-#define BOARD_IOID_DIO1           IOID_1
 #define BOARD_IOID_CS             IOID_11
 #define BOARD_IOID_TDO            IOID_16
 #define BOARD_IOID_TDI            IOID_17
@@ -197,11 +213,11 @@
 #define BOARD_IOID_DIO30          IOID_30
 
 #define BOARD_UNUSED_PINS { \
-    BOARD_IOID_DIO0, BOARD_IOID_DIO1, BOARD_IOID_CS, BOARD_IOID_TDO, \
-    BOARD_IOID_TDI, BOARD_IOID_DIO12, BOARD_IOID_DIO15, BOARD_IOID_DIO21, \
-    BOARD_IOID_DIO22, BOARD_IOID_DIO23, BOARD_IOID_DIO24, BOARD_IOID_DIO25, \
-    BOARD_IOID_DIO26, BOARD_IOID_DIO27, BOARD_IOID_DIO28, BOARD_IOID_DIO29, \
-    BOARD_IOID_DIO30, IOID_UNUSED \
+    BOARD_IOID_CS, BOARD_IOID_TDO, BOARD_IOID_TDI, BOARD_IOID_DIO12, \
+    BOARD_IOID_DIO15, BOARD_IOID_DIO21, BOARD_IOID_DIO22, BOARD_IOID_DIO23, \
+    BOARD_IOID_DIO24, BOARD_IOID_DIO25, BOARD_IOID_DIO26, BOARD_IOID_DIO27, \
+    BOARD_IOID_DIO28, BOARD_IOID_DIO29, \
+    IOID_UNUSED \
   }
 /** @} */
 /*---------------------------------------------------------------------------*/
@@ -209,8 +225,7 @@
  * \name Device string used on startup
  * @{
  */
-#define BOARD_STRING "TI CC2650 LaunchPad"
-
+#define BOARD_STRING "TI CC1350 LaunchPad"
 /** @} */
 /*---------------------------------------------------------------------------*/
 #endif /* BOARD_H_ */
