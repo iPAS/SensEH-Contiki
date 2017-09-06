@@ -79,15 +79,15 @@
 /* Overrides for CMD_PROP_RADIO_DIV_SETUP */
 static uint32_t overrides[] =
 {
-  /* override_use_patch_prop_genfsk.xml
-   * PHY: Use MCE ROM bank 4, RFE RAM patch */
-  //MCE_RFE_OVERRIDE(0, 4, 0, 1, 0, 0),
-  // override_use_patch_prop_lrm.xml
-  // PHY: Use MCE ROM bank 3, RFE RAM patch
-  MCE_RFE_OVERRIDE(0, 3, 0, 1, 0, 0),  // iPAS:
-
-  /* override_synth_prop_863_930_div5.xml
-   * Synth: Set recommended RTRIM to 7 */
+  /*
+   * override_use_patch_prop_genfsk.xml
+   * PHY: Use MCE ROM bank 4, RFE RAM patch
+   */
+  MCE_RFE_OVERRIDE(0, 4, 0, 1, 0, 0),
+  /*
+   * override_synth_prop_863_930_div5.xml
+   * Synth: Set recommended RTRIM to 7
+   */
   HW_REG_OVERRIDE(0x4038, 0x0037),
   /* Synth: Set Fref to 4 MHz */
   (uint32_t)0x000684A3,
@@ -136,11 +136,6 @@ static uint32_t overrides[] =
   HW_REG_OVERRIDE(0x6088, 0x411A),
   /* Tx: Configure PA ramping setting */
   HW_REG_OVERRIDE(0x608C, 0x8213),
-
-  // override_phy_lrm_rom_dsss8.xml
-  // PHY: Configure DSSS=8
-  HW_REG_OVERRIDE(0x505C,0x073C),  // iPAS:
-
   /*
    * Rx: Set RSSI offset to adjust reported RSSI
    * The board can override this
@@ -179,26 +174,28 @@ rfc_CMD_PROP_RADIO_DIV_SETUP_t smartrf_settings_cmd_prop_radio_div_setup =
   .startTrigger.pastTrig = 0x0,
   .condition.rule = 0x1,
   .condition.nSkip = 0x0,
-  .modulation.modType = 0x0,    // iPAS: 0x1,
-  .modulation.deviation = 0x14, // iPAS: 0x64,
+  .modulation.modType = 0x1,
+  .modulation.deviation = 0x64,
   .symbolRate.preScale = 0xf,
-  .symbolRate.rateWord = 0x199A,    // iPAS: 0x8000,
-  .rxBw = 0x20,                     // iPAS: 0x24,
-  .preamConf.nPreamBytes = 0x5,     // iPAS: 0x3,
+  .symbolRate.rateWord = 0x8000,
+  .rxBw = 0x24,
+  .preamConf.nPreamBytes = 0x3,
   .preamConf.preamMode = 0x0,
-  .formatConf.nSwBits = 0x20,       // iPAS: 0x18,
+  .formatConf.nSwBits = 0x18,
   .formatConf.bBitReversal = 0x0,
-  .formatConf.bMsbFirst = 0x0,      // iPAS: 0x1,
-  .formatConf.fecMode = 0x8,        // iPAS: 0x0,
-  .formatConf.whitenMode = 0x0, // iPAS: 0x7, /* 7: .4g mode with dynamic whitening and CRC choice */
+  .formatConf.bMsbFirst = 0x1,
+  .formatConf.fecMode = 0x0,
+
+  /* 7: .4g mode with dynamic whitening and CRC choice */
+  .formatConf.whitenMode = 0x7,
   .config.frontEndMode = 0x00, /* Set by the driver */
-  .config.biasMode = 0x1,       // iPAS: 0x00, /* Set by the driver */
+  .config.biasMode = 0x00,     /* Set by the driver */
   .config.analogCfgMode = 0x0,
   .config.bNoFsPowerUp = 0x0,
-  .txPower = 0xA73F,            // iPAS: 0x00, /* Driver sets correct value */
+  .txPower = 0x00, /* Driver sets correct value */
   .pRegOverride = overrides,
-  .centerFreq = 915,            // iPAS: 868,
-  .intFreq = 0x8000,            //
+  .intFreq = 0x8000,
+  .centerFreq = 868,
   .loDivider = 0x05,
 };
 /*---------------------------------------------------------------------------*/
@@ -215,7 +212,7 @@ rfc_CMD_FS_t smartrf_settings_cmd_fs =
   .startTrigger.pastTrig = 0x0,
   .condition.rule = 0x1,
   .condition.nSkip = 0x0,
-  .frequency = 915,  // iPAS: 868,
+  .frequency = 868,
   .fractFreq = 0x0000,
   .synthConf.bTxMode = 0x0,
   .synthConf.refFreq = 0x0,
@@ -240,13 +237,10 @@ rfc_CMD_PROP_TX_ADV_t smartrf_settings_cmd_prop_tx_adv =
   .condition.nSkip = 0x0,
   .pktConf.bFsOff = 0x0,
   .pktConf.bUseCrc = 0x1,
-
   .pktConf.bCrcIncSw = 0x0, /* .4g mode */
   .pktConf.bCrcIncHdr = 0x0, /* .4g mode */
   .numHdrBits = 0x10 /* 16: .4g mode */,
-
-  .pktLen = 0x14,  // iPAS: 0x0000,
-
+  .pktLen = 0x0000,
   .startConf.bExtTxTrig = 0x0,
   .startConf.inputMode = 0x0,
   .startConf.source = 0x0,
@@ -255,8 +249,7 @@ rfc_CMD_PROP_TX_ADV_t smartrf_settings_cmd_prop_tx_adv =
   .preTrigger.triggerNo = 0x0,
   .preTrigger.pastTrig = 0x1,
   .preTime = 0x00000000,
-
-  .syncWord = 0x00000000,  // iPAS: 0x0055904e,
+  .syncWord = 0x0055904e,
   .pPkt = 0,
 };
 /*---------------------------------------------------------------------------*/
@@ -274,33 +267,22 @@ rfc_CMD_PROP_RX_ADV_t smartrf_settings_cmd_prop_rx_adv =
   .condition.rule = 0x1,
   .condition.nSkip = 0x0,
   .pktConf.bFsOff = 0x0,
-  .pktConf.bRepeatOk = 0x0,  // iPAS: 0x1,
-  .pktConf.bRepeatNok = 0x0, // iPAS: 0x1,
+  .pktConf.bRepeatOk = 0x1,
+  .pktConf.bRepeatNok = 0x1,
   .pktConf.bUseCrc = 0x1,
-
   .pktConf.bCrcIncSw = 0x0, /* .4g mode */
   .pktConf.bCrcIncHdr = 0x0, /* .4g mode */
   .pktConf.endType = 0x0,
-  .pktConf.filterOp = 0x0,  // iPAS: 0x1,
-
-  .pktConf.bVarLen = 0x1,
-  .pktConf.bChkAddress = 0x0,
-
-  .rxConf.bAutoFlushIgnored = 0x0,  // iPAS: 0x1,
-  .rxConf.bAutoFlushCrcErr = 0x0,   // iPAS: 0x1,
-  .rxConf.bIncludeHdr = 0x1,        // iPAS: 0x0,
+  .pktConf.filterOp = 0x1,
+  .rxConf.bAutoFlushIgnored = 0x1,
+  .rxConf.bAutoFlushCrcErr = 0x1,
+  .rxConf.bIncludeHdr = 0x0,
   .rxConf.bIncludeCrc = 0x0,
-  .rxConf.bAppendRssi = 0x0,        // iPAS: 0x1,
+  .rxConf.bAppendRssi = 0x1,
   .rxConf.bAppendTimestamp = 0x0,
   .rxConf.bAppendStatus = 0x1,
-
-  //.syncWord0 = 0x0055904e,
-  //.syncWord1 = 0x00000000,
-  .syncWord = 0x00000000,
-  .maxPktLen = 0x80, // MAKE SURE DATA ENTRY IS LARGE ENOUGH
-  .address0 = 0xAA,
-  .address1 = 0xBB,
-
+  .syncWord0 = 0x0055904e,
+  .syncWord1 = 0x00000000,
   .maxPktLen = 0x0000, /* To be populated by the driver. */
   .hdrConf.numHdrBits = 0x10, /* 16: .4g mode */
   .hdrConf.lenPos = 0x0, /* .4g mode */
@@ -310,13 +292,11 @@ rfc_CMD_PROP_RX_ADV_t smartrf_settings_cmd_prop_rx_adv =
   .addrConf.addrPos = 0x0,
   .addrConf.numAddr = 0x0,
   .lenOffset = -4, /* .4g mode */
-
   .endTrigger.triggerType = TRIG_NEVER,
   .endTrigger.bEnaCmd = 0x0,
   .endTrigger.triggerNo = 0x0,
   .endTrigger.pastTrig = 0x0,
   .endTime = 0x00000000,
-
   .pAddr = 0,
   .pQueue = 0,
   .pOutput = 0,
